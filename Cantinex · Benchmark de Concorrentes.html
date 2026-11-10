@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cantinex · Benchmark de Concorrentes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f3f4f8; --surface:#ffffff; --surface-2:#f7f8fb; --ink:#171c33; --muted:#5f6780; --line:#e2e5ee;
+  --heading:#00104c; --navy:#00104c; --navy-2:#0b1d6b; --gold:#e3b97a; --gold-ink:#8a6417; --gold-soft:#fbf2e2;
+  --nav-bg:#00104c; --nav-ink:#cfd6f0; --nav-active-bg:#e3b97a; --nav-active-ink:#00104c;
+  --grid:#e9ecf3; --axis:#b7bdd0; --chart-text:#6b7287; --cliente:#b8892f;
+  --ok:#1f8a5b; --warn:#c98a1b; --danger:#c43c4f; --focus:#e3b97a;
+  --radius-lg:14px; --radius:10px; --radius-sm:7px;
+  --shadow:0 1px 2px rgba(0,16,76,.06), 0 4px 14px rgba(0,16,76,.05);
+  --font-body:"Figtree", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-head:"Bricolage Grotesque", "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0c1124; --surface:#141a33; --surface-2:#192040; --ink:#e7eaf4; --muted:#a2aac2; --line:#28304f;
+    --heading:#eef1fa; --navy:#8ea2ff; --navy-2:#a9b8ff; --gold:#e3b97a; --gold-ink:#e8c48c; --gold-soft:#2a2516;
+    --nav-bg:#070b1c; --nav-ink:#b9c2e2; --nav-active-bg:#e3b97a; --nav-active-ink:#0c1124;
+    --grid:#232b49; --axis:#46507a; --chart-text:#9aa3bf; --cliente:#e3b97a;
+    --ok:#4cc38a; --warn:#e8b04b; --danger:#ef6f81;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0c1124; --surface:#141a33; --surface-2:#192040; --ink:#e7eaf4; --muted:#a2aac2; --line:#28304f;
+  --heading:#eef1fa; --navy:#8ea2ff; --navy-2:#a9b8ff; --gold:#e3b97a; --gold-ink:#e8c48c; --gold-soft:#2a2516;
+  --nav-bg:#070b1c; --nav-ink:#b9c2e2; --nav-active-bg:#e3b97a; --nav-active-ink:#0c1124;
+  --grid:#232b49; --axis:#46507a; --chart-text:#9aa3bf; --cliente:#e3b97a;
+  --ok:#4cc38a; --warn:#e8b04b; --danger:#ef6f81;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+h1,h2,h3,h4{font-family:var(--font-head);color:var(--heading);margin:0;line-height:1.2;letter-spacing:-.01em}
+p{margin:0}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+img,svg{max-width:100%}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.side{width:236px;flex-shrink:0;background:var(--nav-bg);color:var(--nav-ink);padding:22px 14px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;gap:18px}
+.brand{padding:0 8px}
+.brand .mark{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-head);font-weight:800;font-size:21px;color:#fff;letter-spacing:-.02em}
+.brand .mark i{width:10px;height:10px;border-radius:3px;background:var(--gold);display:inline-block;transform:rotate(45deg)}
+.brand small{display:block;color:#8f9acb;font-size:12.5px;margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;text-decoration:none;font-weight:500;font-size:14.5px;cursor:pointer;color:var(--nav-ink)}
+.nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav a.on{background:var(--nav-active-bg);color:var(--nav-active-ink);font-weight:700}
+.nav .ic{width:18px;text-align:center;opacity:.9}
+.nav .sep{height:1px;background:rgba(255,255,255,.08);margin:8px 6px}
+.side-foot{margin-top:auto;font-size:12.5px;color:#8f9acb;padding:0 8px;display:flex;flex-direction:column;gap:6px}
+.sync{display:inline-flex;align-items:center;gap:7px}
+.sync b{width:8px;height:8px;border-radius:50%;background:#8f9acb;display:inline-block}
+.sync.db b{background:#4cc38a}.sync.local b{background:#e8b04b}
+.main{flex:1;min-width:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.top .crumb{font-size:12.5px;color:var(--muted)}
+.top h1{font-size:21px}
+.content{padding:24px 28px 80px;max-width:1240px}
+.lead{color:var(--muted);max-width:70ch}
+.lead b{color:var(--ink)}
+
+/* Elements */
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;border-radius:var(--radius);padding:9px 15px;font-weight:600;font-size:14px;cursor:pointer;background:var(--surface-2);color:var(--heading);text-decoration:none}
+.btn:hover{filter:brightness(.97)}
+.btn.primary{background:var(--navy);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#0c1124}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#0c1124}}
+.btn.gold{background:var(--gold);color:#1d1606}
+.btn.ghost{background:var(--surface);border-color:var(--line)}
+.btn.danger{background:var(--surface);border-color:color-mix(in srgb,var(--danger) 40%,transparent);color:var(--danger)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:30px;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill .sw{width:8px;height:8px;border-radius:50%}
+.pill.amz{border:none}
+.amz.muito-alta{background:color-mix(in srgb,#c0392b 16%,transparent);color:#c0392b}
+.amz.alta{background:color-mix(in srgb,#d35400 15%,transparent);color:#d35400}
+.amz.media{background:color-mix(in srgb,#b7950b 16%,transparent);color:#a8870a}
+.amz.baixa{background:color-mix(in srgb,#1e8449 15%,transparent);color:#1e8449}
+.amz.muito-baixa{background:var(--surface-2);color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.pad{padding:20px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2.wide{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.sec{display:flex;align-items:baseline;gap:12px;margin:30px 0 12px;flex-wrap:wrap}
+.sec h2{font-size:18px}
+.sec .hint{color:var(--muted);font-size:13px}
+.sec .sp{flex:1}
+.na{color:var(--muted);opacity:.7}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* KPIs */
+.kpi{padding:16px 18px}
+.kpi .v{font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--heading);line-height:1.1;overflow-wrap:anywhere}
+.kpi .v small{font-size:14px;color:var(--muted);font-weight:600;font-family:var(--font-body)}
+.kpi .l{font-size:13px;color:var(--muted);margin-top:4px}
+.kpi.hero{background:var(--navy);border:none}
+.kpi.hero .v,.kpi.hero .l{color:#fff}
+:root[data-theme="dark"] .kpi.hero .v,:root[data-theme="dark"] .kpi.hero .l{color:#0c1124}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .kpi.hero .v,:root:not([data-theme="light"]) .kpi.hero .l{color:#0c1124}}
+
+/* Restaurant cards */
+.rc{padding:16px 16px 16px 20px;display:flex;flex-direction:column;gap:10px;cursor:pointer;position:relative;overflow:hidden;text-decoration:none}
+.rc:hover{border-color:var(--axis)}
+.rc .flag{position:absolute;left:0;top:0;bottom:0;width:5px}
+.rc h3{font-size:16.5px;overflow-wrap:anywhere}
+.rc .sub{font-size:13px;color:var(--muted)}
+.meter{height:6px;border-radius:6px;background:var(--grid);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:6px}
+.rc .row{display:flex;gap:14px;align-items:flex-end}
+.rc .row>div{flex:1;min-width:0}
+.rc .num{font-family:var(--font-head);font-weight:800;font-size:20px}
+.rc .num small{font-size:12px;color:var(--muted);font-family:var(--font-body)}
+.rc .k{font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:30px;padding:6px 13px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+:root[data-theme="dark"] .chip.on{color:#0c1124}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.on{color:#0c1124}}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.toolbar .grow{flex:1}
+
+/* Forms */
+.fld{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--heading)}
+.fld .h{font-weight:400;color:var(--muted);font-size:12px}
+input[type=text],input[type=number],input[type=search],input[type=date],input[type=url],select,textarea{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-sm);padding:9px 11px;font-size:14px;font-weight:500;width:100%;color:var(--ink)}
+textarea{resize:vertical;min-height:64px}
+.fg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fg3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.ck{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:30px;padding:5px 11px;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink);background:var(--surface)}
+.ck input{margin:0;accent-color:var(--navy)}
+.ck:has(input:checked){border-color:var(--navy);background:color-mix(in srgb,var(--navy) 10%,transparent)}
+.fsec{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.fsec h3{font-size:16px;margin-bottom:4px}
+.fsec>.muted{font-size:13px;margin-bottom:12px}
+.critgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.critgroup h4{font-size:14px;margin-bottom:8px;color:var(--gold-ink)}
+.critrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line)}
+.critrow span{font-size:14px;font-weight:500;color:var(--ink)}
+.critrow span em{display:block;font-style:normal;font-size:12px;color:var(--muted);font-weight:400}
+.critrow select{width:84px}
+.factions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:24px;position:sticky;bottom:0;background:var(--surface);padding:12px 0 calc(4px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+
+/* Ficha */
+.dhead{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.dhead h1{font-size:28px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;color:var(--muted);font-size:13.5px}
+.meta b{color:var(--ink);font-weight:600}
+.back{display:inline-block;color:var(--muted);font-size:13px;margin-bottom:12px;cursor:pointer;text-decoration:none}
+.back:hover{color:var(--heading)}
+.score .l{font-size:13px;color:var(--muted);font-weight:600}
+.score .v{font-family:var(--font-head);font-size:34px;font-weight:800;line-height:1.1;margin-top:2px}
+.score .v small{font-size:15px;color:var(--muted)}
+.score .h{font-size:12.5px;color:var(--muted);margin-top:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t td,table.t th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t td.c,table.t th.c{text-align:center}
+table.t tr.fam td{background:var(--surface-2);font-weight:700;color:var(--gold-ink);font-size:13px}
+.dot{display:inline-block;min-width:40px;text-align:center;padding:2px 0;border-radius:6px;font-weight:700;font-size:13px}
+.notes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.note{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.note .t{font-size:13px;font-weight:700;color:var(--heading);margin-bottom:4px}
+.note p{font-size:14px;white-space:pre-wrap}
+.note.vazia p{color:var(--muted);font-style:italic}
+.info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;font-size:14px}
+.info .k{font-size:12.5px;color:var(--muted)}
+.days{display:flex;gap:4px}
+.days span{width:30px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.days span.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+:root[data-theme="dark"] .days span.on{color:#0c1124}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .days span.on{color:#0c1124}}
+
+/* Comments */
+.coms{display:flex;flex-direction:column;gap:10px}
+.com{display:grid;grid-template-columns:32px 1fr;gap:10px;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.com img{width:32px;height:32px;border-radius:50%}
+.com .hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.com .hd b{color:var(--heading)}
+.com .hd .when{color:var(--muted)}
+.com .hd .x{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12.5px}
+.com .hd .x:hover{color:var(--danger)}
+.com p{margin-top:4px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.ctype{font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:20px}
+.ctype.comentario{background:color-mix(in srgb,var(--navy) 12%,transparent);color:var(--navy)}
+.ctype.campo{background:color-mix(in srgb,#009E73 15%,transparent);color:#0b8c66}
+.ctype.pendencia{background:color-mix(in srgb,#D55E00 14%,transparent);color:#c0550a}
+.composer{display:grid;grid-template-columns:180px 1fr auto;gap:10px;align-items:start;margin-top:12px}
+
+/* Compare */
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;flex-wrap:wrap}
+.seg button{border:none;background:transparent;padding:7px 14px;border-radius:8px;font-weight:600;font-size:13.5px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--heading);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface)}
+table.cmp{border-collapse:collapse;font-size:13.5px;min-width:100%}
+table.cmp th,table.cmp td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+table.cmp th{background:var(--surface-2);font-weight:700;color:var(--heading);font-size:12.5px;position:sticky;top:0}
+table.cmp td.cl,table.cmp th.cl{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;font-weight:600}
+table.cmp th.cl{background:var(--surface-2);z-index:2}
+table.cmp tr.hl td{font-weight:700}
+table.cmp th.cli{color:var(--cliente)}
+table.cmp td.win{color:var(--ok);font-weight:800}
+details.chooser{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:6px 12px}
+details.chooser summary{cursor:pointer;font-weight:600;font-size:13.5px;padding:4px 0;color:var(--heading)}
+.chkgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 14px;padding:8px 0}
+.chkgrid label{display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer}
+
+/* Charts */
+.chart text{fill:var(--chart-text);font-family:var(--font-body)}
+.chart .gl{stroke:var(--grid)}
+.chart .ax{stroke:var(--axis)}
+.chart .lbl{fill:var(--ink);font-weight:600}
+.chart .q{fill:var(--muted);opacity:.65;font-style:italic}
+.chart .lab-bg{fill:var(--surface)}
+.layers{display:flex;flex-direction:column;gap:4px;padding-right:4px}
+.layers.scroll{max-height:440px;overflow:auto}
+.layers h4{font-size:13px;margin:10px 0 4px;color:var(--muted);font-family:var(--font-body);font-weight:700}
+.layers h4:first-child{margin-top:0}
+.layer{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;padding:4px 6px;border-radius:7px}
+.layer:hover{background:var(--surface-2)}
+.layer input{accent-color:var(--navy);margin:0}
+.layer .sw{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.layer .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layer .c{font-size:12px;color:var(--muted)}
+.mapgrid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:start}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.multi{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.multi .card h4{font-size:14px;margin-bottom:4px}
+.callout{background:var(--gold-soft);border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);border-radius:var(--radius);padding:12px 16px;font-size:14px;color:var(--ink)}
+.callout b{color:var(--gold-ink)}
+.empty{padding:34px 20px;text-align:center;color:var(--muted)}
+.empty h3{margin-bottom:6px}
+
+/* Toast / modal */
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(16px);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:100;max-width:90vw}
+:root[data-theme="dark"] .toast{color:#0c1124}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .toast{color:#0c1124}}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.erro{background:var(--danger);color:#fff}
+.mbg{position:fixed;inset:0;background:rgba(5,10,30,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.modal{background:var(--surface);border-radius:14px;padding:22px;max-width:460px;width:100%;border:1px solid var(--line)}
+.modal h3{font-size:18px;margin-bottom:8px}
+.modal .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+@media (max-width:980px){
+  .app{flex-direction:column}
+  .side{width:100%;height:auto;position:static;padding:12px 14px;gap:10px}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+  .nav a{white-space:nowrap;font-size:13.5px;padding:7px 10px}
+  .nav .sep{display:none}
+  .side-foot{display:none}
+  .top{padding:12px 16px}
+  .content{padding:18px 16px 80px}
+  .g2,.g2.wide,.g3,.g4,.fg,.fg3,.critgrid,.notes,.info,.mapgrid{grid-template-columns:minmax(0,1fr)}
+  .g4.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .composer{grid-template-columns:1fr}
+  .chkgrid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark"><i></i>Cantinex</span><small>Benchmark de concorrentes · Buritis</small></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot"><span class="sync" id="sync"><b></b><span>Conectando…</span></span><span>IBMEX Consultoria</span></div>
+  </aside>
+  <main class="main">
+    <header class="top">
+      <div><div class="crumb" id="crumb">Benchmark de concorrentes</div><h1 id="title">Painel</h1></div>
+      <div id="topActs"></div>
+    </header>
+    <div class="content" id="view"></div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================================================================
+   CANTINEX · Benchmark de concorrentes (IBMEX)
+   Dados compartilhados pela equipe (banco do artifact). Sem a conexão,
+   funciona no aparelho (localStorage) e permite exportar/importar backup.
+   Nenhum dado de concorrente vem pré-carregado: tudo é coletado em campo.
+   ========================================================================= */
+
+/* ---------- Configuração ---------- */
+const CRITERIOS = [
+  { k:"preco",          n:"Preço (atratividade)",        g:"Proposta e valor", h:"5 = preço muito atrativo para o público" },
+  { k:"custoBeneficio", n:"Custo-benefício",             g:"Proposta e valor", h:"O que entrega pelo que cobra" },
+  { k:"qualidade",      n:"Qualidade e sabor",           g:"Proposta e valor", h:"Prova da comida na visita" },
+  { k:"caseiro",        n:"Identidade de comida caseira",g:"Proposta e valor", h:"Tempero, apresentação, “comida de casa”" },
+  { k:"variedade",      n:"Variedade do cardápio",       g:"Proposta e valor", h:"Pratos fixos, prato do dia, opções" },
+  { k:"porcao",         n:"Porção e rendimento",         g:"Proposta e valor", h:"Tamanho do prato, sustenta o almoço" },
+  { k:"atendimento",    n:"Atendimento",                 g:"Experiência",      h:"Cordialidade, proximidade, dono presente" },
+  { k:"ambiente",       n:"Ambiente e acolhimento",      g:"Experiência",      h:"Conforto, clima familiar" },
+  { k:"agilidade",      n:"Agilidade e espera",          g:"Experiência",      h:"5 = sem fila e serviço rápido" },
+  { k:"higiene",        n:"Limpeza e higiene",           g:"Experiência",      h:"Salão, banheiro, buffet" },
+  { k:"horario",        n:"Horário de funcionamento",    g:"Experiência",      h:"Dias, turnos, fim de semana" },
+  { k:"delivery",       n:"Delivery e plataformas",      g:"Canais e comunicação", h:"iFood, 99Food, WhatsApp, entrega própria" },
+  { k:"digital",        n:"Redes sociais e marketing",   g:"Canais e comunicação", h:"Instagram, frequência, qualidade" },
+  { k:"reputacao",      n:"Reputação online",            g:"Canais e comunicação", h:"Nota e volume de avaliações (Google/apps)" },
+  { k:"fidelizacao",    n:"Fidelização e promoções",     g:"Canais e comunicação", h:"Cartão fidelidade, combos, captação de contato" },
+  { k:"localizacao",    n:"Localização no Buritis",      g:"Posicionamento",   h:"Fluxo e proximidade do público" },
+  { k:"acesso",         n:"Acesso e estacionamento",     g:"Posicionamento",   h:"Facilidade de chegar e parar" },
+  { k:"similaridade",   n:"Similaridade com a Cantinex", g:"Posicionamento",   h:"Disputa o mesmo cliente e ocasião" },
+];
+const GRUPOS = [...new Set(CRITERIOS.map(c => c.g))];
+const NOTAS = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5];
+
+const CATEGORIAS = {
+  direto:      { n:"Direto",      longo:"Concorrente direto",      cor:"#D55E00", forma:"circle" },
+  indireto:    { n:"Indireto",    longo:"Concorrente indireto",    cor:"#0072B2", forma:"triangle" },
+  estrategico: { n:"Estratégico", longo:"Concorrente estratégico", cor:"#E69F00", forma:"square" },
+  cliente:     { n:"Cliente",     longo:"Cantinex (cliente)",      cor:"var(--cliente)", forma:"diamond" },
+};
+const PERFIS = {
+  pf:          { n:"Prato feito / executivo", cor:"#D55E00" },
+  selfservice: { n:"Self-service por quilo",  cor:"#0072B2" },
+  marmitex:    { n:"Marmitex / delivery",     cor:"#009E73" },
+  alacarte:    { n:"À la carte",              cor:"#CC79A7" },
+  padaria:     { n:"Padaria / lanchonete",    cor:"#E69F00" },
+  outro:       { n:"Outro",                   cor:"#56B4E9" },
+};
+const PRECO_TIPOS = { pf:"prato feito", kg:"por kg", marmitex:"marmitex", medio:"médio por pessoa" };
+const CANAIS = { salao:"Salão", retirada:"Retirada", ifood:"iFood", "99food":"99Food", whatsapp:"WhatsApp", proprio:"Entrega própria", site:"Site / app próprio" };
+const DIAS = [["seg","Seg"],["ter","Ter"],["qua","Qua"],["qui","Qui"],["sex","Sex"],["sab","Sáb"],["dom","Dom"]];
+const TURNOS = { cafe:"Café", almoco:"Almoço", jantar:"Jantar" };
+const NOTAS_TXT = [
+  ["fortes","Pontos fortes"],["fracos","Pontos fracos"],["oportunidades","Oportunidades para a Cantinex"],
+  ["diferenciais","Diferenciais"],["ideias","Ideias da visita"],["gerais","Observações gerais"],
+];
+const COM_TIPOS = { comentario:"Comentário", campo:"Observação de campo", pendencia:"Pendência" };
+const SERIES = ["#D55E00","#0072B2","#009E73","#CC79A7","#E69F00","#56B4E9","#882255","#117733","#332288","#AA4499","#44AA99","#999933"];
+
+/* Ficha inicial da Cantinex: só o que foi dito no kick-off (a confirmar em campo). */
+const CLIENTE_PADRAO = {
+  id:"cliente", nome:"Cantinex", categoria:"cliente", perfil:"pf",
+  formato:"Comida caseira: pratos fixos (frango e alcatra grelhados) + prato do dia",
+  bairro:"Buritis, Belo Horizonte", endereco:"", distancia:"",
+  dias:["seg","ter","qua","qui","sex"], turnos:["almoco"], horario:"",
+  preco:{ valor:"", tipo:"pf", estimado:false, fonte:"" },
+  canais:["salao","99food"], google:{ nota:"", avaliacoes:"", data:"" }, links:{ maps:"", instagram:"" },
+  criterios:{},
+  anotacoes:{
+    fortes:"Comida caseira feita “como para os filhos”, dona presente e atendimento próximo; clientela fiel, com clientes que almoçam todos os dias (kick-off).",
+    fracos:"Pouca organização financeira e de processos; preços iguais aos do ponto antigo com estrutura maior; equipe de 2 pessoas (kick-off).",
+    oportunidades:"Delivery pedido pelos próprios clientes; teste de sábado ou domingo; delivery de massas (kick-off). Validar com o benchmark.",
+    diferenciais:"Sentimento de “estar em casa”: clientes viraram amigos entre si (kick-off).",
+    ideias:"", gerais:"Canais: cadastro na 99Food informado como aceito no kick-off; confirmar ativação. Quarta é o dia mais fraco; quinta e sexta, os mais fortes.",
+  },
+};
+
+/* ---------- Estado e armazenamento ---------- */
+const LKEY = "cantinex_benchmark_local_v1";
+const S = { rest:{}, coms:{}, mode:"local", db:null, user:null, uid:null, ready:false, writeOK:true };
+
+function lerLocal(){ try{ const o = JSON.parse(localStorage.getItem(LKEY) || "null"); return o && o.rest ? o : null; }catch(e){ return null; } }
+function gravarLocal(){ if (S.mode !== "local") return; try{ localStorage.setItem(LKEY, JSON.stringify({ rest:S.rest, coms:S.coms })); }catch(e){} }
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function cliente(){ return S.rest.cliente || clone(CLIENTE_PADRAO); }
+function concorrentes(){ return Object.values(S.rest).filter(r => r.id !== "cliente"); }
+function ativos(){ return concorrentes().filter(r => !r.rascunho); }
+function byId(id){ return id === "cliente" ? cliente() : (S.rest[id] || null); }
+
+async function salvarRest(r){
+  r.atualizadoEm = new Date().toISOString();
+  if (S.uid) r.atualizadoPor = S.uid;
+  if (!r.criadoEm) r.criadoEm = r.atualizadoEm;
+  if (S.mode === "db"){
+    await S.db.collection("restaurantes").doc(r.id).set(clone(r));
+  }
+  S.rest[r.id] = r; gravarLocal();
+}
+async function excluirRest(id){
+  if (S.mode === "db"){
+    await S.db.collection("restaurantes").doc(id).delete();
+    const cs = Object.values(S.coms).filter(c => c.restId === id);
+    for (const c of cs){ await S.db.collection("comentarios").doc(c.id).delete(); }
+  }
+  delete S.rest[id];
+  for (const c of Object.values(S.coms)) if (c.restId === id) delete S.coms[c.id];
+  gravarLocal();
+}
+async function addComentario(restId, tipo, texto){
+  const c = { restId, tipo, texto, ts:new Date().toISOString(), autorId:S.uid || null };
+  if (S.mode === "db"){
+    const ref = S.db.collection("comentarios").doc();
+    c.id = ref.id; await ref.set(clone(c));
+  } else {
+    c.id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    c.autorNome = localStorage.getItem("cantinex_nome") || "";
+  }
+  S.coms[c.id] = c; gravarLocal();
+}
+async function delComentario(id){
+  if (S.mode === "db") await S.db.collection("comentarios").doc(id).delete();
+  delete S.coms[id]; gravarLocal();
+}
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const r1 = n => Math.round(n*10)/10;
+const fmt = (n, d=1) => n == null || isNaN(n) ? "—" : Number(n).toFixed(d).replace(".", ",");
+const media = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : null;
+function vals(r, keys){ return keys.map(k => r.criterios && r.criterios[k]).filter(v => typeof v === "number"); }
+const KEYS_FORCA = CRITERIOS.filter(c => c.k !== "similaridade").map(c => c.k);
+const KEYS_TODOS = CRITERIOS.map(c => c.k);
+function forca(r){ return media(vals(r, KEYS_FORCA)); }
+function notaGrupo(r, g){ return media(vals(r, CRITERIOS.filter(c => c.g === g).map(c => c.k))); }
+function nCrit(r){ return vals(r, KEYS_TODOS).length; }
+function ameaca(r){
+  if (r.id === "cliente") return null;
+  const f = forca(r); if (f == null) return null;
+  const s = r.criterios && typeof r.criterios.similaridade === "number" ? r.criterios.similaridade : null;
+  const idx = s == null ? f : (f * 0.6 + s * 0.4);
+  let key, label;
+  if (idx > 4) { key="muito-alta"; label="Ameaça muito alta"; }
+  else if (idx > 3) { key="alta"; label="Ameaça alta"; }
+  else if (idx > 2) { key="media"; label="Ameaça média"; }
+  else if (idx > 1) { key="baixa"; label="Ameaça baixa"; }
+  else { key="muito-baixa"; label="Ameaça muito baixa"; }
+  return { key, label, idx, semSim: s == null };
+}
+function corNota(n){ if (n == null) return "var(--axis)"; if (n >= 4) return "var(--ok)"; if (n >= 2.6) return "var(--warn)"; return "var(--danger)"; }
+function precoNum(r){
+  const v = r.preco && String(r.preco.valor || "").replace(/\s/g," ");
+  if (!v) return null;
+  const nums = (v.match(/\d+(?:[.,]\d{1,2})?/g) || []).map(x => parseFloat(x.replace(",", ".")));
+  return nums.length ? media(nums) : null;
+}
+function precoTxt(r){
+  const p = r.preco || {}; if (!p.valor) return "";
+  return "R$ " + p.valor + " " + (PRECO_TIPOS[p.tipo] || "") + (p.estimado ? " (est.)" : "");
+}
+function catPill(cat){ const c = CATEGORIAS[cat] || CATEGORIAS.direto; return `<span class="pill"><span class="sw" style="background:${c.cor}"></span>${esc(c.longo)}</span>`; }
+function perfilPill(p){ const c = PERFIS[p]; return c ? `<span class="pill"><span class="sw" style="background:${c.cor};border-radius:2px"></span>${esc(c.n)}</span>` : ""; }
+function amzPill(r){ const a = ameaca(r); return a ? `<span class="pill amz ${a.key}">${a.label}</span>` : ""; }
+function slug(nome){
+  let b = (nome || "restaurante").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,48) || "restaurante";
+  if (b === "cliente") b = "cliente-2";
+  let id = b, n = 2; while (S.rest[id]) { id = b + "-" + n; n++; } return id;
+}
+function dataBR(iso){ if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return iso; return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
+function toast(msg, erro){ const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (erro ? " erro" : ""); clearTimeout(t._h); t._h = setTimeout(()=> t.className = "toast", 3000); }
+function modal({ titulo, corpo, ok="Confirmar", perigo=false }){
+  return new Promise(res => {
+    const bg = document.createElement("div"); bg.className = "mbg";
+    bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><h3>${esc(titulo)}</h3><div class="muted">${corpo}</div>
+      <div class="acts"><button class="btn ghost" data-x="0">Cancelar</button><button class="btn ${perigo?"danger":"primary"}" data-x="1">${esc(ok)}</button></div></div>`;
+    document.body.appendChild(bg);
+    const fim = v => { bg.remove(); res(v); };
+    bg.addEventListener("click", e => { if (e.target === bg) fim(false); const b = e.target.closest("[data-x]"); if (b) fim(b.dataset.x === "1"); });
+    bg.querySelector("[data-x='1']").focus();
+  });
+}
+async function baixar(nome, conteudo, tipo){
+  try{
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl){ await dl.save({ filename:nome, data:conteudo }); toast("Arquivo pronto para salvar."); return; }
+  }catch(e){ if (e && e.code === "declined") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([conteudo], { type:tipo || "application/octet-stream" }));
+  a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+}
+function svgParaArquivo(sel, nome){
+  const el = document.querySelector(sel); if (!el) return;
+  const cs = getComputedStyle(document.documentElement);
+  let s = el.outerHTML;
+  s = s.replace(/var\((--[a-z0-9-]+)\)/gi, (_, v) => cs.getPropertyValue(v).trim() || "#888");
+  const css = `<style>text{font-family:Figtree,Arial,sans-serif;fill:${cs.getPropertyValue("--chart-text")}} .gl{stroke:${cs.getPropertyValue("--grid")}} .ax{stroke:${cs.getPropertyValue("--axis")}} .lbl{fill:${cs.getPropertyValue("--ink")};font-weight:600} .q{fill:${cs.getPropertyValue("--muted")};font-style:italic} .lab-bg{fill:${cs.getPropertyValue("--surface")}}</style>`;
+  s = s.replace(/^<svg([^>]*)>/, (m, a) => `<svg${a.includes("xmlns")?a:a+' xmlns="http://www.w3.org/2000/svg"'}>${css}<rect width="100%" height="100%" fill="${cs.getPropertyValue("--surface")}"/>`);
+  baixar(nome, s, "image/svg+xml");
+}
+
+/* ---------- Gráficos (SVG) ---------- */
+function radarSVG(series, dims, { id="radar", size=440, compact=false } = {}){
+  if (dims.length < 3) return `<p class="na small" style="padding:20px 0">Preencha ao menos 3 critérios para ver o perfil.</p>`;
+  const N = dims.length, W = size, H = compact ? size*0.86 : size*0.92, cx = W/2, cy = H/2 + 4, R = Math.min(W, H)/2 - (compact ? 44 : 62);
+  const pt = (i, r) => { const a = -Math.PI/2 + i*2*Math.PI/N; return [cx + Math.cos(a)*r, cy + Math.sin(a)*r]; };
+  let g = "";
+  for (let k = 1; k <= 5; k++) g += `<polygon class="gl" points="${dims.map((_,i)=>pt(i,R*k/5).join(",")).join(" ")}" fill="none"/>`;
+  dims.forEach((d,i) => { const [x,y] = pt(i,R); g += `<line class="gl" x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"/>`; });
+  for (let k = 1; k <= 5; k++){ const [x,y] = pt(0,R*k/5); g += `<text x="${x+4}" y="${y+3}" font-size="9">${k}</text>`; }
+  let lab = "";
+  dims.forEach((d,i) => {
+    const [x,y] = pt(i, R + (compact ? 14 : 20));
+    const anc = Math.abs(x-cx) < 8 ? "middle" : (x > cx ? "start" : "end");
+    const nome = compact && d.n.length > 18 ? d.n.slice(0,17) + "…" : d.n;
+    const palavras = nome.split(" "); const linhas = [];
+    let l = ""; for (const w of palavras){ if ((l + " " + w).trim().length > (compact ? 18 : 16) && l){ linhas.push(l); l = w; } else l = (l + " " + w).trim(); } if (l) linhas.push(l);
+    const dy0 = -(linhas.length-1)*5.5;
+    lab += `<text x="${x}" y="${y}" font-size="${compact?9.5:11}" text-anchor="${anc}" dominant-baseline="middle">${linhas.map((t,j)=>`<tspan x="${x}" dy="${j===0?dy0:11}">${esc(t)}</tspan>`).join("")}</text>`;
+  });
+  let polys = "";
+  series.forEach(s => {
+    const pts = dims.map((d,i) => { const v = s.vals(d); return v == null ? null : pt(i, R*v/5); });
+    const filled = pts.map((p,i) => p || [cx,cy]);
+    polys += `<polygon points="${filled.map(p=>p.join(",")).join(" ")}" fill="${s.cor}" fill-opacity="${series.length > 3 ? .07 : .14}" stroke="${s.cor}" stroke-width="${s.grosso?2.6:2}" ${s.dash?'stroke-dasharray="6 4"':""} stroke-linejoin="round"/>`;
+    pts.forEach((p) => { if (p) polys += `<circle cx="${p[0]}" cy="${p[1]}" r="${compact?2.4:3}" fill="${s.cor}"><title>${esc(s.nome)}</title></circle>`; });
+  });
+  return `<svg class="chart" id="${id}" viewBox="-48 0 ${W+96} ${H}" width="100%" style="max-width:${W+96}px;display:block;margin:0 auto" role="img" aria-label="Gráfico radar">${g}${polys}${lab}</svg>`;
+}
+function legendHTML(series){ return `<div class="legend">${series.map(s=>`<span><svg width="22" height="10"><line x1="1" y1="5" x2="21" y2="5" stroke="${s.cor}" stroke-width="3" ${s.dash?'stroke-dasharray="5 3"':""}/></svg>${esc(s.nome)}</span>`).join("")}</div>`; }
+
+function barrasSVG(items, { max=5, id="barras", fmtV = v => fmt(v), unidade="" } = {}){
+  if (!items.length) return `<p class="na small">Sem dados para exibir.</p>`;
+  const rowH = 30, L = 170, W = 640, Rm = 56, H = items.length*rowH + 30;
+  const sx = v => L + (v/max)*(W-L-Rm);
+  let g = "";
+  const passo = max <= 5 ? 1 : Math.pow(10, Math.floor(Math.log10(max))) / (max/Math.pow(10, Math.floor(Math.log10(max))) > 4 ? 1 : 2);
+  for (let v = 0; v <= max + 1e-9; v += passo){ g += `<line class="gl" x1="${sx(v)}" y1="6" x2="${sx(v)}" y2="${H-22}"/><text x="${sx(v)}" y="${H-6}" font-size="10" text-anchor="middle">${fmt(v, passo < 1 ? 1 : 0)}</text>`; }
+  items.forEach((it,i) => {
+    const y = 8 + i*rowH, nome = it.nome.length > 24 ? it.nome.slice(0,23) + "…" : it.nome;
+    g += `<text class="${it.destaque?"lbl":""}" x="${L-10}" y="${y+rowH/2}" font-size="12.5" text-anchor="end" dominant-baseline="middle" ${it.destaque?'style="fill:var(--cliente);font-weight:800"':""}>${esc(nome)}${it.destaque?" ★":""}</text>`;
+    if (it.v == null){ g += `<text x="${L+4}" y="${y+rowH/2}" font-size="11.5" dominant-baseline="middle" class="q">sem nota</text>`; return; }
+    g += `<rect x="${L}" y="${y+5}" width="${Math.max(2, sx(it.v)-L)}" height="${rowH-12}" rx="5" fill="${it.cor}" ${it.destaque?'stroke="var(--ink)" stroke-width="1.2"':""}><title>${esc(it.nome)}: ${fmtV(it.v)}${unidade}</title></rect>`;
+    g += `<text class="lbl" x="${sx(it.v)+6}" y="${y+rowH/2}" font-size="12" dominant-baseline="middle">${fmtV(it.v)}${unidade}</text>`;
+  });
+  return `<svg class="chart" id="${id}" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Gráfico de barras">${g}</svg>`;
+}
+
+function forma(f, x, y, R, cor, extra=""){
+  if (f === "circle") return `<circle cx="${x}" cy="${y}" r="${R}" fill="${cor}" ${extra}/>`;
+  if (f === "triangle") return `<polygon points="${x},${y-R-1.5} ${x+R+1.5},${y+R*.85} ${x-R-1.5},${y+R*.85}" fill="${cor}" stroke-linejoin="round" ${extra}/>`;
+  if (f === "square") return `<rect x="${x-R+1}" y="${y-R+1}" width="${(R-1)*2}" height="${(R-1)*2}" rx="3" fill="${cor}" ${extra}/>`;
+  return `<polygon points="${x},${y-R-3} ${x+R+3},${y} ${x},${y+R+3} ${x-R-3},${y}" fill="${cor}" ${extra}/>`;
+}
+function hull(pts){
+  const p = pts.slice().sort((a,b)=> a[0]-b[0] || a[1]-b[1]); if (p.length < 3) return p;
+  const cr = (o,a,b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const lo = []; for (const q of p){ while (lo.length >= 2 && cr(lo[lo.length-2], lo[lo.length-1], q) <= 0) lo.pop(); lo.push(q); }
+  const up = []; for (const q of p.slice().reverse()){ while (up.length >= 2 && cr(up[up.length-2], up[up.length-1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0,-1).concat(up.slice(0,-1));
+}
+function rotulos(pts, geo){
+  const H = 20, CW = 6.4, PAD = 8, R = 11;
+  const larg = t => Math.max(40, t.length*CW + PAD*2);
+  const bolhas = pts.map(p => ({ cx:p.px, cy:p.py, w:R*2+6, h:R*2+6 }));
+  const bate = (a,b,m=3) => !(a.cx+a.w/2+m < b.cx-b.w/2 || a.cx-a.w/2-m > b.cx+b.w/2 || a.cy+a.h/2+m < b.cy-b.h/2 || a.cy-a.h/2-m > b.cy+b.h/2);
+  const out = [];
+  for (const p of pts.slice().sort((a,b)=>a.py-b.py)){
+    const w = larg(p.nome), bx = p.px, by = p.py;
+    const cand = [[bx,by-(R+5+H/2),0],[bx,by+(R+5+H/2),0],[bx+(R+5+w/2),by,1],[bx-(R+5+w/2),by,1],[bx+(R+3+w/2),by-(R+H/2),1],[bx-(R+3+w/2),by-(R+H/2),1],[bx+(R+3+w/2),by+(R+H/2),1],[bx-(R+3+w/2),by+(R+H/2),1],[bx,by-(R+5+H*1.5+4),1],[bx,by+(R+5+H*1.5+4),1]];
+    let best = null, bs = Infinity;
+    cand.forEach((c,i) => {
+      const rc = { cx:c[0], cy:c[1], w, h:H }; let s = i*4;
+      if (rc.cx-w/2 < geo.x0) s += (geo.x0-(rc.cx-w/2))*3; if (rc.cx+w/2 > geo.x1) s += ((rc.cx+w/2)-geo.x1)*3;
+      if (rc.cy-H/2 < geo.y1-14) s += (geo.y1-14-(rc.cy-H/2))*3; if (rc.cy+H/2 > geo.y0) s += ((rc.cy+H/2)-geo.y0)*3;
+      for (const o of out) if (bate(rc,o.rc)) s += 500;
+      for (const b of bolhas) if (bate(rc,b,1)) s += 240;
+      if (s < bs){ bs = s; best = { rc, lead:c[2] }; }
+    });
+    out.push({ p, rc:best.rc, lead:best.lead, w });
+  }
+  return out;
+}
+
+/* ---------- Navegação ---------- */
+const NAV = [
+  ["painel","◧","Painel"],["restaurantes","☰","Restaurantes"],["novo","＋","Cadastrar"],["cliente","★","Cantinex"],
+  ["sep"],["comparativo","▤","Comparativo"],["perfis","◎","Perfis"],["mapa","⌖","Mapa de percepção"],
+  ["sep"],["metodologia","ⓘ","Metodologia"],["dados","⇅","Dados e backup"],
+];
+function rota(){
+  const h = (location.hash || "#painel").slice(1);
+  const m = h.match(/^(ficha|editar)-([a-z0-9-]+)$/);
+  if (m) return { r:m[1], id:m[2] };
+  return { r: VIEWS[h] ? h : "painel" };
+}
+function renderNav(r){
+  const ativo = r === "ficha" || r === "editar" ? (rota().id === "cliente" ? "cliente" : "restaurantes") : r;
+  $("#nav").innerHTML = NAV.map(([k,ic,t]) => k === "sep" ? `<div class="sep"></div>` : `<a href="#${k}" class="${k===ativo?"on":""}"><span class="ic" aria-hidden="true">${ic}</span>${t}</a>`).join("");
+}
+function renderSync(){
+  const el = $("#sync"); if (!el) return;
+  if (!S.ready){ el.className = "sync"; el.lastElementChild.textContent = "Conectando…"; return; }
+  el.className = "sync " + S.mode;
+  el.lastElementChild.textContent = S.mode === "db" ? "Dados compartilhados com a equipe" : "Salvo só neste aparelho";
+}
+
+const VIEWS = {}, INIT = {}, TITULOS = {};
+let RENDER_LOCK = false;
+function render(){
+  const { r, id } = rota();
+  renderNav(r); renderSync();
+  const [t, c] = (typeof TITULOS[r] === "function" ? TITULOS[r](id) : TITULOS[r]) || ["", ""];
+  $("#title").textContent = t; $("#crumb").textContent = c;
+  $("#topActs").innerHTML = (r === "painel" || r === "restaurantes") ? `<a class="btn gold" href="#novo">＋ Cadastrar restaurante</a>` : "";
+  $("#view").innerHTML = VIEWS[r](id);
+  if (INIT[r]) INIT[r](id);
+}
+let agendado = null;
+function agendarRender(){
+  const { r } = rota();
+  if (r === "novo" || r === "editar"){ return; }
+  clearTimeout(agendado); agendado = setTimeout(render, 60);
+}
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0,0); });
+
+/* ---------- Painel ---------- */
+TITULOS.painel = ["Painel", "Benchmark de concorrentes · Buritis, BH"];
+VIEWS.painel = () => {
+  const cs = ativos(), todos = concorrentes(), cli = cliente();
+  if (!todos.length) return `
+    <p class="lead">Aqui a equipe cadastra os restaurantes visitados no Buritis, avalia cada um nos mesmos critérios e compara com a <b>Cantinex</b> em tabelas, perfis sobrepostos e no mapa de percepção.</p>
+    <div class="card empty" style="margin-top:20px"><h3>Nenhum restaurante cadastrado ainda</h3>
+      <p>Comece pela ficha da Cantinex e depois cadastre o primeiro concorrente visitado.</p>
+      <div class="toolbar" style="justify-content:center"><a class="btn gold" href="#novo">＋ Cadastrar restaurante</a><a class="btn ghost" href="#cliente">Revisar ficha da Cantinex</a></div></div>`;
+  const n = c => cs.filter(x => x.categoria === c).length;
+  const rank = cs.map(c => ({ c, a:ameaca(c) })).filter(x => x.a).sort((a,b) => b.a.idx - a.a.idx);
+  const top = rank[0];
+  const precos = cs.filter(c => c.preco && c.preco.tipo === "pf").map(precoNum).filter(v => v != null);
+  const itens = [...cs, cli].map(r => ({ nome:r.nome, v:forca(r), cor: r.id==="cliente" ? "var(--cliente)" : CATEGORIAS[r.categoria].cor, destaque:r.id==="cliente" }))
+    .sort((a,b) => (b.v ?? -1) - (a.v ?? -1));
+  const porPerfil = Object.entries(PERFIS).map(([k,p]) => ({ k, p, n:cs.filter(c => c.perfil === k).length })).filter(x => x.n);
+  const ult = Object.values(S.coms).sort((a,b) => (b.ts||"").localeCompare(a.ts||"")).slice(0,5);
+  const rasc = todos.filter(r => r.rascunho).length;
+  return `
+  <p class="lead">Restaurantes do Buritis avaliados nos mesmos ${CRITERIOS.length} critérios. A <b>força competitiva</b> é a média das notas (sem a similaridade) e a <b>ameaça</b> pondera força e similaridade com a Cantinex.</p>
+  <div class="grid g4 kpis" style="margin-top:16px">
+    <div class="card kpi"><div class="v">${cs.length}${rasc?`<small> + ${rasc} rascunho${rasc>1?"s":""}</small>`:""}</div><div class="l">Concorrentes avaliados</div></div>
+    <div class="card kpi"><div class="v">${n("direto")}<small> dir.</small> ${n("indireto")}<small> ind.</small> ${n("estrategico")}<small> est.</small></div><div class="l">Por categoria</div></div>
+    <div class="card kpi hero"><div class="v">${top ? esc(top.c.nome) : "—"}</div><div class="l">Maior ameaça${top ? " · índice " + fmt(top.a.idx) : ""}</div></div>
+    <div class="card kpi"><div class="v">${precos.length ? "R$ " + fmt(media(precos),2) : "—"}</div><div class="l">Prato feito médio${precos.length ? ` (${precos.length} preço${precos.length>1?"s":""})` : ""}</div></div>
+  </div>
+  <div class="grid g2 wide" style="margin-top:16px">
+    <div class="card pad"><div class="sec" style="margin:0 0 8px"><h2>Força competitiva</h2><span class="hint">média dos critérios, 0 a 5</span></div>${barrasSVG(itens, { id:"rankForca" })}</div>
+    <div class="card pad">
+      <div class="sec" style="margin:0 0 8px"><h2>Por perfil</h2><span class="sp"></span><a class="small" href="#perfis">Comparar perfis</a></div>
+      ${porPerfil.length ? `<table class="t"><tbody>${porPerfil.map(x => { const lst = cs.filter(c=>c.perfil===x.k); return `<tr><td>${perfilPill(x.k)}</td><td class="c">${x.n}</td><td class="c">${fmt(media(lst.map(forca).filter(v=>v!=null)))}</td></tr>`; }).join("")}</tbody></table><p class="small muted" style="margin-top:6px">Colunas: quantidade e força média.</p>` : `<p class="na small">Sem perfis avaliados.</p>`}
+      <div class="sec" style="margin:20px 0 8px"><h2>Últimos comentários</h2></div>
+      ${ult.length ? `<div class="coms" id="ultComs">${ult.map(c => { const r = byId(c.restId); return `<a href="#ficha-${esc(c.restId)}" style="text-decoration:none" class="small"><span class="ctype ${c.tipo}">${COM_TIPOS[c.tipo]||""}</span> <b>${esc(r ? r.nome : "—")}</b>: <span class="muted">${esc(c.texto.length > 90 ? c.texto.slice(0,89)+"…" : c.texto)}</span></a>`; }).join("")}</div>` : `<p class="na small">Nenhum comentário ainda.</p>`}
+    </div>
+  </div>
+  <div class="sec"><h2>Concorrentes</h2><span class="hint">ordenados pela ameaça</span><span class="sp"></span><a class="small" href="#restaurantes">Ver todos</a></div>
+  <div class="grid g3">${cardsHTML(cs.slice().sort((a,b) => ((ameaca(b)||{}).idx ?? -1) - ((ameaca(a)||{}).idx ?? -1)))}</div>`;
+};
+function cardsHTML(lista){
+  return lista.map(c => {
+    const f = forca(c), cat = CATEGORIAS[c.categoria] || CATEGORIAS.direto;
+    const canais = (c.canais||[]).map(k => CANAIS[k]).filter(Boolean);
+    return `<a class="card rc" href="#ficha-${esc(c.id)}">
+      <span class="flag" style="background:${cat.cor}"></span>
+      <div><h3>${esc(c.nome)}</h3><div class="sub">${esc(c.formato || (PERFIS[c.perfil]||{}).n || "")}</div></div>
+      <div class="tags">${c.id==="cliente" ? catPill("cliente") : catPill(c.categoria)}${perfilPill(c.perfil)}${amzPill(c)}${c.rascunho?`<span class="pill">Rascunho</span>`:""}</div>
+      <div class="row">
+        <div><div class="k">Força competitiva</div><div class="num" style="color:${corNota(f)}">${fmt(f)}<small>/5</small></div><div class="meter"><i style="width:${f?f/5*100:0}%;background:${corNota(f)}"></i></div></div>
+        <div><div class="k">Preço</div><div style="font-weight:700;font-size:14px">${esc(precoTxt(c)) || '<span class="na">—</span>'}</div></div>
+      </div>
+      ${canais.length ? `<div class="small muted">${esc(canais.join(", "))}</div>` : ""}
+    </a>`;
+  }).join("");
+}
+
+/* ---------- Lista ---------- */
+const FILTRO = { cat:"todos", perfil:"todos", busca:"", ordem:"ameaca" };
+TITULOS.restaurantes = ["Restaurantes", "Benchmark de concorrentes"];
+VIEWS.restaurantes = () => {
+  const cats = ["todos","direto","indireto","estrategico"];
+  let lst = concorrentes().filter(c => (FILTRO.cat === "todos" || c.categoria === FILTRO.cat) && (FILTRO.perfil === "todos" || c.perfil === FILTRO.perfil) && (!FILTRO.busca || (c.nome + " " + (c.bairro||"") + " " + (c.formato||"")).toLowerCase().includes(FILTRO.busca.toLowerCase())));
+  const ord = { ameaca:(a,b)=>((ameaca(b)||{}).idx??-1)-((ameaca(a)||{}).idx??-1), forca:(a,b)=>(forca(b)??-1)-(forca(a)??-1), nome:(a,b)=>a.nome.localeCompare(b.nome,"pt-BR"), preco:(a,b)=>(precoNum(a)??1e9)-(precoNum(b)??1e9), recente:(a,b)=>(b.atualizadoEm||"").localeCompare(a.atualizadoEm||"") };
+  lst.sort(ord[FILTRO.ordem]);
+  return `<p class="lead">Todos os estabelecimentos mapeados. Abra a ficha para ver notas, gráfico, anotações e comentários da equipe.</p>
+    <div class="toolbar">
+      <div class="chips" id="fcat">${cats.map(c => `<button class="chip ${FILTRO.cat===c?"on":""}" data-v="${c}">${c==="todos"?"Todos":CATEGORIAS[c].n}</button>`).join("")}</div>
+      <span class="grow"></span>
+      <select id="fperfil" style="width:auto"><option value="todos">Todos os perfis</option>${Object.entries(PERFIS).map(([k,p])=>`<option value="${k}" ${FILTRO.perfil===k?"selected":""}>${p.n}</option>`).join("")}</select>
+      <select id="fordem" style="width:auto">${[["ameaca","Maior ameaça"],["forca","Maior força"],["preco","Menor preço"],["nome","Nome (A–Z)"],["recente","Editados recentemente"]].map(([k,t])=>`<option value="${k}" ${FILTRO.ordem===k?"selected":""}>${t}</option>`).join("")}</select>
+      <input type="search" id="fbusca" placeholder="Buscar nome, bairro ou formato" value="${esc(FILTRO.busca)}" style="width:240px">
+    </div>
+    ${lst.length ? `<div class="grid g3">${cardsHTML(lst)}</div>` : `<div class="card empty"><h3>Nenhum restaurante encontrado</h3><p>Ajuste os filtros ou cadastre um novo.</p></div>`}`;
+};
+INIT.restaurantes = () => {
+  $$("#fcat .chip").forEach(b => b.onclick = () => { FILTRO.cat = b.dataset.v; render(); });
+  $("#fperfil").onchange = e => { FILTRO.perfil = e.target.value; render(); };
+  $("#fordem").onchange = e => { FILTRO.ordem = e.target.value; render(); };
+  const fb = $("#fbusca"); let t; fb.oninput = () => { clearTimeout(t); t = setTimeout(() => { FILTRO.busca = fb.value; render(); const n = $("#fbusca"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+};
+
+/* ---------- Ficha ---------- */
+let FICHA_CLI = true, COM_RASCUNHO = { restId:null, texto:"", tipo:"comentario" };
+TITULOS.ficha = id => { const r = byId(id); return [r ? r.nome : "Ficha", id === "cliente" ? "Restaurante cliente" : "Ficha do concorrente"]; };
+TITULOS.cliente = ["Cantinex", "Restaurante cliente"];
+VIEWS.cliente = () => VIEWS.ficha("cliente");
+INIT.cliente = () => INIT.ficha("cliente");
+VIEWS.ficha = id => {
+  const r = byId(id);
+  if (!r) return `<div class="card empty"><h3>Restaurante não encontrado</h3><p>Ele pode ter sido excluído por outra pessoa da equipe.</p><a class="btn ghost" href="#restaurantes">Voltar à lista</a></div>`;
+  const isCli = id === "cliente", f = forca(r), a = ameaca(r), cli = cliente();
+  const dims = CRITERIOS.filter(c => typeof (r.criterios||{})[c.k] === "number" || (FICHA_CLI && !isCli && typeof (cli.criterios||{})[c.k] === "number"));
+  const series = [{ nome:r.nome, cor: isCli ? "var(--cliente)" : CATEGORIAS[r.categoria].cor, vals:d => (r.criterios||{})[d.k] ?? null, grosso:true }];
+  if (FICHA_CLI && !isCli && nCrit(cli)) series.push({ nome:"Cantinex", cor:"var(--cliente)", vals:d => (cli.criterios||{})[d.k] ?? null, dash:true });
+  let linhas = "";
+  for (const g of GRUPOS){
+    linhas += `<tr class="fam"><td>${g}</td><td class="c">${fmt(notaGrupo(r,g))}</td>${!isCli?`<td class="c">${fmt(notaGrupo(cli,g))}</td>`:""}</tr>`;
+    for (const c of CRITERIOS.filter(x => x.g === g)){
+      const v = (r.criterios||{})[c.k], vc = (cli.criterios||{})[c.k];
+      const cel = x => typeof x === "number" ? `<span class="dot" style="background:color-mix(in srgb,${corNota(x)} 16%,transparent);color:${corNota(x)}">${fmt(x)}</span>` : `<span class="na small">—</span>`;
+      linhas += `<tr><td>${c.n}</td><td class="c">${cel(v)}</td>${!isCli?`<td class="c">${cel(vc)}</td>`:""}</tr>`;
+    }
+  }
+  const coms = Object.values(S.coms).filter(c => c.restId === id).sort((a,b) => (a.ts||"").localeCompare(b.ts||""));
+  const d = new Set(r.dias||[]);
+  const g = r.google || {};
+  const links = [r.links && r.links.maps ? `<a href="${esc(r.links.maps)}" target="_blank" rel="noopener">Google Maps</a>` : "", r.links && r.links.instagram ? `<a href="${esc(r.links.instagram)}" target="_blank" rel="noopener">Instagram</a>` : ""].filter(Boolean).join(" · ");
+  if (COM_RASCUNHO.restId !== id) COM_RASCUNHO = { restId:id, texto:"", tipo:"comentario" };
+  return `
+    <a class="back" href="#${isCli?"painel":"restaurantes"}">← ${isCli?"Painel":"Restaurantes"}</a>
+    <div class="dhead">
+      <div><h1>${esc(r.nome)}</h1>
+        <div class="tags" style="margin-top:8px">${catPill(isCli?"cliente":r.categoria)}${perfilPill(r.perfil)}${r.rascunho?`<span class="pill">Rascunho</span>`:""}</div>
+        <div class="meta">${r.formato?`<span><b>Formato:</b> ${esc(r.formato)}</span>`:""}${r.bairro||r.endereco?`<span><b>Local:</b> ${esc([r.endereco, r.bairro].filter(Boolean).join(", "))}</span>`:""}${r.distancia?`<span><b>Distância da Cantinex:</b> ${esc(r.distancia)} m</span>`:""}${links?`<span>${links}</span>`:""}</div>
+      </div>
+      <div class="toolbar" style="margin:0">
+        <a class="btn primary" href="#editar-${esc(id)}">✎ Editar avaliação</a>
+        ${!isCli?`<button class="btn danger" id="btnExcluir">Excluir</button>`:""}
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card pad score"><div class="l">Força competitiva</div><div class="v" style="color:${corNota(f)}">${f==null?'<span class="na" style="font-size:18px">Sem notas ainda</span>':fmt(f)+"<small>/5</small>"}</div><div class="h">${nCrit(r)} de ${CRITERIOS.length} critérios avaliados${!isCli && forca(cli)!=null ? ` · Cantinex: ${fmt(forca(cli))}` : ""}</div></div>
+      <div class="card pad score">${isCli ? `<div class="l">Papel na análise</div><div class="v" style="font-size:20px;color:var(--cliente)">Referência</div><div class="h">A Cantinex é avaliada nos mesmos critérios e aparece em todas as comparações, mas não entra nos rankings de ameaça.</div>` :
+        `<div class="l">Nível de ameaça</div><div class="v">${a?`<span class="pill amz ${a.key}" style="font-size:17px;padding:4px 14px">${a.label}</span>`:'<span class="na" style="font-size:18px">Sem notas ainda</span>'}</div><div class="h">${a?`Índice ${fmt(a.idx)} de 5${a.semSim?" · similaridade não avaliada":""}`:"Preencha os critérios para calcular."}</div>`}</div>
+      <div class="card pad score"><div class="l">Preço</div><div class="v" style="font-size:22px">${esc(precoTxt(r)) || '<span class="na" style="font-size:18px">Não informado</span>'}</div><div class="h">${r.preco && r.preco.fonte ? "Fonte: " + esc(r.preco.fonte) : "Registre a fonte do preço (visita, cardápio, app)."}</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card pad">
+        <div class="sec" style="margin:0 0 8px"><h2>Perfil por critério</h2><span class="sp"></span>
+          ${!isCli?`<label class="ck"><input type="checkbox" id="ovCli" ${FICHA_CLI?"checked":""}> Sobrepor Cantinex</label>`:""}
+          <button class="btn sm ghost" id="dlRadar">Baixar SVG</button></div>
+        ${radarSVG(series, dims, { id:"radarFicha" })}
+        ${series.length > 1 ? legendHTML(series) : ""}
+      </div>
+      <div class="card pad">
+        <div class="sec" style="margin:0 0 8px"><h2>Notas</h2></div>
+        <table class="t"><thead><tr><th>Critério</th><th class="c">${isCli?"Nota":esc(r.nome.length>14?r.nome.slice(0,13)+"…":r.nome)}</th>${!isCli?`<th class="c" style="color:var(--cliente)">Cantinex</th>`:""}</tr></thead><tbody>${linhas}</tbody></table>
+      </div>
+    </div>
+    <div class="card pad" style="margin-top:16px">
+      <div class="info">
+        <div><div class="k">Dias de funcionamento</div><div class="days" style="margin-top:4px">${DIAS.map(([k,t])=>`<span class="${d.has(k)?"on":""}">${t}</span>`).join("")}</div></div>
+        <div><div class="k">Turnos e horário</div><div>${esc((r.turnos||[]).map(t=>TURNOS[t]).join(", ") || "—")}${r.horario?` · ${esc(r.horario)}`:""}</div></div>
+        <div><div class="k">Canais de venda</div><div>${esc((r.canais||[]).map(k=>CANAIS[k]).filter(Boolean).join(", ") || "—")}</div></div>
+        <div><div class="k">Reputação no Google</div><div>${g.nota?`${esc(g.nota)} ★ ${g.avaliacoes?`(${esc(g.avaliacoes)} avaliações)`:""}${g.data?` · consultado em ${esc(g.data)}`:""}`:"—"}</div></div>
+        <div><div class="k">Coleta</div><div>${r.dataVisita?`Visita em ${esc(r.dataVisita)}`:"Data da visita não registrada"}${r.atualizadoEm?` · editado em ${dataBR(r.atualizadoEm)}`:""}<span id="editor"></span></div></div>
+      </div>
+    </div>
+    <div class="sec"><h2>Anotações da equipe</h2></div>
+    <div class="notes">${NOTAS_TXT.map(([k,t]) => { const v = ((r.anotacoes||{})[k]||"").trim(); return `<div class="note ${v?"":"vazia"}"><div class="t">${t}</div><p>${v?esc(v):"A preencher."}</p></div>`; }).join("")}</div>
+    <div class="sec"><h2>Comentários e observações</h2><span class="hint">${coms.length} registro${coms.length===1?"":"s"}</span></div>
+    <div class="coms" id="coms">${coms.length ? coms.map(c => `<div class="com" data-autor="${esc(c.autorId||"")}">
+        <img alt="" data-av="${esc(c.autorId||"")}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23999'/%3E%3C/svg%3E">
+        <div><div class="hd"><b data-nm="${esc(c.autorId||"")}">${esc(c.autorNome || "Equipe")}</b><span class="ctype ${c.tipo}">${COM_TIPOS[c.tipo]||""}</span><span class="when">${dataBR(c.ts)}</span><button class="x" data-del="${esc(c.id)}">Excluir</button></div><p>${esc(c.texto)}</p></div></div>`).join("") : `<p class="na small">Nenhum comentário. Registre impressões da visita, dúvidas ou pendências de coleta.</p>`}</div>
+    <div class="composer">
+      <select id="comTipo">${Object.entries(COM_TIPOS).map(([k,t])=>`<option value="${k}" ${COM_RASCUNHO.tipo===k?"selected":""}>${t}</option>`).join("")}</select>
+      <textarea id="comTexto" rows="2" placeholder="Escreva um comentário para a equipe…">${esc(COM_RASCUNHO.texto)}</textarea>
+      <button class="btn primary" id="comEnviar">Publicar</button>
+    </div>
+    ${S.mode==="local" && !localStorage.getItem("cantinex_nome") ? `<p class="small muted" style="margin-top:6px">Modo local: <a href="#dados">defina seu nome</a> para assinar os comentários.</p>` : ""}`;
+};
+INIT.ficha = id => {
+  const r = byId(id); if (!r) return;
+  const ov = $("#ovCli"); if (ov) ov.onchange = () => { FICHA_CLI = ov.checked; render(); };
+  $("#dlRadar").onclick = () => svgParaArquivo("#radarFicha", `perfil-${id}.svg`);
+  const ex = $("#btnExcluir"); if (ex) ex.onclick = async () => {
+    if (!await modal({ titulo:"Excluir restaurante", corpo:`Excluir <b>${esc(r.nome)}</b> e seus comentários? Isso vale para toda a equipe e não pode ser desfeito.`, ok:"Excluir", perigo:true })) return;
+    try { await excluirRest(id); toast("Restaurante excluído."); location.hash = "#restaurantes"; } catch(e){ toast("Não foi possível excluir: " + (e.message||e.code), true); }
+  };
+  const tx = $("#comTexto"), tp = $("#comTipo");
+  tx.oninput = () => COM_RASCUNHO.texto = tx.value; tp.onchange = () => COM_RASCUNHO.tipo = tp.value;
+  $("#comEnviar").onclick = async () => {
+    const t = tx.value.trim(); if (!t){ toast("Escreva o comentário antes de publicar.", true); return; }
+    $("#comEnviar").disabled = true;
+    try { await addComentario(id, tp.value, t); COM_RASCUNHO.texto = ""; toast("Comentário publicado."); render(); }
+    catch(e){ toast("Não foi possível publicar: " + (e.message||e.code), true); $("#comEnviar").disabled = false; }
+  };
+  $$("[data-del]").forEach(b => b.onclick = async () => {
+    if (!await modal({ titulo:"Excluir comentário", corpo:"Este comentário será removido para toda a equipe.", ok:"Excluir", perigo:true })) return;
+    try { await delComentario(b.dataset.del); toast("Comentário excluído."); render(); } catch(e){ toast("Não foi possível excluir.", true); }
+  });
+  resolverNomes([r.atualizadoPor]);
+};
+async function resolverNomes(extra=[]){
+  if (!S.user) return;
+  const ids = [...new Set([...$$("[data-nm]").map(e => e.dataset.nm), ...extra].filter(Boolean))];
+  if (!ids.length) return;
+  try{
+    const ps = await S.user.profiles(ids);
+    $$("[data-nm]").forEach(e => { const p = ps[e.dataset.nm]; if (p) e.textContent = p.name || "Pessoa da equipe"; });
+    $$("[data-av]").forEach(e => { const p = ps[e.dataset.av]; if (p) e.src = p.avatarUrl; });
+    $$(".com").forEach(e => { const p = ps[e.dataset.autor]; const x = e.querySelector(".x"); if (x && p && !p.isMe && !S.isOwner) x.remove(); });
+    const ed = $("#editor"); const r = extra[0] && ps[extra[0]];
+    if (ed && r) ed.textContent = " por " + (r.name || "pessoa da equipe");
+  }catch(e){}
+}
+
+/* ---------- Formulário ---------- */
+TITULOS.novo = ["Cadastrar restaurante", "Nova avaliação"];
+TITULOS.editar = id => [id === "cliente" ? "Editar Cantinex" : "Editar avaliação", byId(id) ? byId(id).nome : ""];
+VIEWS.novo = () => formHTML(null);
+INIT.novo = () => bindForm(null);
+VIEWS.editar = id => { const r = byId(id); return r ? formHTML(r) : VIEWS.ficha(id); };
+INIT.editar = id => { if (byId(id)) bindForm(id); };
+function formHTML(r){
+  const isCli = r && r.id === "cliente";
+  r = r || { categoria:"direto", perfil:"pf", preco:{tipo:"pf"}, canais:[], dias:[], turnos:["almoco"], criterios:{}, anotacoes:{}, google:{}, links:{} };
+  const p = r.preco || {}, g = r.google || {}, L = r.links || {}, cr = r.criterios || {}, an = r.anotacoes || {};
+  const opt = (obj, sel) => Object.entries(obj).map(([k,v]) => `<option value="${k}" ${sel===k?"selected":""}>${typeof v === "string" ? v : (v.longo || v.n)}</option>`).join("");
+  const cks = (obj, arr, nm) => Object.entries(obj).map(([k,t]) => `<label class="ck"><input type="checkbox" name="${nm}" value="${k}" ${(arr||[]).includes(k)?"checked":""}> ${t}</label>`).join("");
+  return `<form class="card pad" id="form" novalidate>
+    <p class="lead" style="margin-bottom:16px">${isCli ? "A ficha da Cantinex usa os mesmos critérios dos concorrentes para servir de referência nas comparações." : "Registre o que foi observado na visita. Campos em branco ficam como “a preencher” e podem ser completados depois."}</p>
+    <h3 style="font-size:16px;margin-bottom:12px">Identificação</h3>
+    <div class="fg">
+      <label class="fld">Nome do restaurante *<input type="text" id="f_nome" value="${esc(r.nome||"")}" placeholder="Ex.: Restaurante da Esquina" ${isCli?"":"required"}></label>
+      ${isCli ? `<div></div>` : `<label class="fld">Categoria<select id="f_cat">${opt({direto:CATEGORIAS.direto,indireto:CATEGORIAS.indireto,estrategico:CATEGORIAS.estrategico}, r.categoria)}</select><span class="h">Direto disputa o mesmo almoço; indireto, outra solução; estratégico, referência a observar.</span></label>`}
+      <label class="fld">Perfil<select id="f_perfil">${opt(PERFIS, r.perfil)}</select><span class="h">Usado no comparativo por perfil e nas camadas do mapa.</span></label>
+      <label class="fld">Formato (descrição livre)<input type="text" id="f_formato" value="${esc(r.formato||"")}" placeholder="Ex.: PF com prato do dia e buffet de saladas"></label>
+      <label class="fld">Endereço<input type="text" id="f_end" value="${esc(r.endereco||"")}" placeholder="Rua, número"></label>
+      <label class="fld">Bairro<input type="text" id="f_bairro" value="${esc(r.bairro||"")}" placeholder="Buritis"></label>
+      <label class="fld">Distância da Cantinex (m)<input type="number" id="f_dist" min="0" step="10" value="${esc(r.distancia||"")}" placeholder="350"></label>
+      <label class="fld">Data da visita<input type="date" id="f_visita" value="${esc(r.dataVisita||"")}"></label>
+      <label class="fld">Link do Google Maps<input type="url" id="f_maps" value="${esc(L.maps||"")}" placeholder="https://maps.google.com/…"></label>
+      <label class="fld">Instagram<input type="url" id="f_insta" value="${esc(L.instagram||"")}" placeholder="https://instagram.com/…"></label>
+    </div>
+
+    <div class="fsec"><h3>Funcionamento e canais</h3><p class="muted">Ajuda a avaliar a oportunidade de sábado/domingo e de delivery.</p>
+      <div class="fg">
+        <div class="fld">Dias<div class="checks">${DIAS.map(([k,t]) => `<label class="ck"><input type="checkbox" name="dias" value="${k}" ${(r.dias||[]).includes(k)?"checked":""}> ${t}</label>`).join("")}</div></div>
+        <div class="fld">Turnos<div class="checks">${cks(TURNOS, r.turnos, "turnos")}</div></div>
+        <label class="fld">Horário<input type="text" id="f_horario" value="${esc(r.horario||"")}" placeholder="11h às 15h"></label>
+        <div class="fld">Canais de venda<div class="checks">${cks(CANAIS, r.canais, "canais")}</div></div>
+      </div>
+    </div>
+
+    <div class="fsec"><h3>Preço e reputação</h3><p class="muted">Todo número precisa de fonte e data. Marque “estimativa” quando não houver valor publicado.</p>
+      <div class="fg3">
+        <label class="fld">Preço (R$)<input type="text" id="f_preco" value="${esc(p.valor||"")}" placeholder="29,90 ou 25 a 35" inputmode="decimal"></label>
+        <label class="fld">Tipo de preço<select id="f_ptipo">${opt(PRECO_TIPOS, p.tipo || "pf")}</select></label>
+        <label class="fld">Fonte do preço<input type="text" id="f_pfonte" value="${esc(p.fonte||"")}" placeholder="Visita 12/11, cardápio no iFood…"></label>
+        <label class="ck" style="align-self:end;width:max-content"><input type="checkbox" id="f_pest" ${p.estimado?"checked":""}> Estimativa IBMEX</label>
+        <div></div><div></div>
+        <label class="fld">Nota no Google<input type="text" id="f_gnota" value="${esc(g.nota||"")}" placeholder="4,6" inputmode="decimal"></label>
+        <label class="fld">Nº de avaliações<input type="number" id="f_gaval" min="0" value="${esc(g.avaliacoes||"")}" placeholder="320"></label>
+        <label class="fld">Consultado em<input type="date" id="f_gdata" value="${esc(g.data||"")}"></label>
+      </div>
+    </div>
+
+    <div class="fsec"><h3>Critérios (0 a 5)</h3><p class="muted">5 é o melhor desempenho do ponto de vista do cliente. Deixe “—” para o que não foi possível avaliar.</p>
+      <div class="critgrid">${GRUPOS.map(gr => `<div class="critgroup"><h4>${gr}</h4>${CRITERIOS.filter(c=>c.g===gr).map(c => `
+        <label class="critrow"><span>${c.n}<em>${esc(c.h)}</em></span><select data-crit="${c.k}"><option value="">—</option>${NOTAS.map(n=>`<option value="${n}" ${cr[c.k]===n?"selected":""}>${fmt(n)}</option>`).join("")}</select></label>`).join("")}</div>`).join("")}
+      </div>
+    </div>
+
+    <div class="fsec"><h3>Anotações</h3><p class="muted">Use a seção de comentários da ficha para conversas e pendências; aqui fica a síntese.</p>
+      <div class="fg">${NOTAS_TXT.map(([k,t]) => `<label class="fld">${t}<textarea data-nota="${k}" rows="3">${esc(an[k]||"")}</textarea></label>`).join("")}</div>
+    </div>
+
+    <div class="factions">
+      <a class="btn ghost" href="${r.id ? "#ficha-"+esc(r.id) : "#restaurantes"}">Cancelar</a>
+      ${isCli ? "" : `<button type="button" class="btn ghost" id="btnRasc">Salvar rascunho</button>`}
+      <button type="submit" class="btn primary" id="btnSalvar">Salvar avaliação</button>
+    </div>
+  </form>`;
+}
+function bindForm(id){
+  const form = $("#form"); if (!form) return;
+  const isCli = id === "cliente";
+  const sel = n => $$(`input[name=${n}]:checked`).map(i => i.value);
+  async function salvar(rascunho){
+    const base = id ? clone(byId(id)) : {};
+    const r = Object.assign(base, {
+      nome: $("#f_nome").value.trim() || (isCli ? "Cantinex" : ""),
+      categoria: isCli ? "cliente" : $("#f_cat").value,
+      perfil: $("#f_perfil").value, formato: $("#f_formato").value.trim(),
+      endereco: $("#f_end").value.trim(), bairro: $("#f_bairro").value.trim(),
+      distancia: $("#f_dist").value.trim(), dataVisita: $("#f_visita").value,
+      links: { maps: $("#f_maps").value.trim(), instagram: $("#f_insta").value.trim() },
+      dias: sel("dias"), turnos: sel("turnos"), canais: sel("canais"), horario: $("#f_horario").value.trim(),
+      preco: { valor: $("#f_preco").value.trim(), tipo: $("#f_ptipo").value, fonte: $("#f_pfonte").value.trim(), estimado: $("#f_pest").checked },
+      google: { nota: $("#f_gnota").value.trim(), avaliacoes: $("#f_gaval").value.trim(), data: $("#f_gdata").value },
+      criterios: {}, anotacoes: {},
+    });
+    $$("[data-crit]").forEach(s => { if (s.value !== "") r.criterios[s.dataset.crit] = parseFloat(s.value); });
+    $$("[data-nota]").forEach(t => r.anotacoes[t.dataset.nota] = t.value.trim());
+    if (!r.nome){ toast("Informe o nome do restaurante.", true); $("#f_nome").focus(); return; }
+    if (r.preco.valor && !/^\d{1,4}([.,]\d{1,2})?(\s*(a|-|–)\s*\d{1,4}([.,]\d{1,2})?)?$/.test(r.preco.valor)){ toast("Preço inválido. Use 29,90 ou uma faixa como 25 a 35.", true); $("#f_preco").focus(); return; }
+    if (!isCli) r.rascunho = !!rascunho;
+    if (!r.id) r.id = isCli ? "cliente" : slug(r.nome);
+    $$("#form button").forEach(b => b.disabled = true);
+    try { await salvarRest(r); toast(rascunho ? "Rascunho salvo." : "Avaliação salva."); location.hash = "#ficha-" + r.id; }
+    catch(e){ toast("Não foi possível salvar: " + (e.message || e.code || "erro"), true); $$("#form button").forEach(b => b.disabled = false); }
+  }
+  form.addEventListener("submit", e => { e.preventDefault(); salvar(false); });
+  const br = $("#btnRasc"); if (br) br.onclick = () => salvar(true);
+}
+
+/* ---------- Comparativo ---------- */
+const CMP = { modo:"dois", a:null, b:"cliente", cliente:true, crit:new Set(KEYS_TODOS), perfil:"todos", cat:"todos", metrica:"forca", cor:"categoria" };
+TITULOS.comparativo = ["Comparativo", "Tabelas e gráficos"];
+function corDe(r){ if (r.id === "cliente") return "var(--cliente)"; return CMP.cor === "perfil" ? (PERFIS[r.perfil]||PERFIS.outro).cor : CATEGORIAS[r.categoria].cor; }
+VIEWS.comparativo = () => {
+  const lst = concorrentes();
+  if (!lst.length) return `<div class="card empty"><h3>Cadastre restaurantes para comparar</h3><a class="btn gold" href="#novo">＋ Cadastrar restaurante</a></div>`;
+  if (!CMP.a || !S.rest[CMP.a]) CMP.a = lst[0].id;
+  const opts = sel => [cliente(), ...lst].map(r => `<option value="${esc(r.id)}" ${sel===r.id?"selected":""}>${esc(r.nome)}${r.id==="cliente"?" (cliente)":""}</option>`).join("");
+  const chooser = `<details class="chooser"><summary>Critérios exibidos (${CMP.crit.size} de ${CRITERIOS.length})</summary>
+    <div class="toolbar" style="margin:6px 0"><button class="btn sm ghost" data-allc="1">Marcar todos</button><button class="btn sm ghost" data-allc="0">Desmarcar todos</button></div>
+    <div class="chkgrid">${CRITERIOS.map(c => `<label><input type="checkbox" data-c="${c.k}" ${CMP.crit.has(c.k)?"checked":""}> ${c.n}</label>`).join("")}</div></details>`;
+  const filtros = `<select id="cPerfil" style="width:auto"><option value="todos">Todos os perfis</option>${Object.entries(PERFIS).map(([k,p])=>`<option value="${k}" ${CMP.perfil===k?"selected":""}>${p.n}</option>`).join("")}</select>
+    <select id="cCat" style="width:auto"><option value="todos">Todas as categorias</option>${["direto","indireto","estrategico"].map(k=>`<option value="${k}" ${CMP.cat===k?"selected":""}>${CATEGORIAS[k].longo}</option>`).join("")}</select>
+    <label class="ck"><input type="checkbox" id="cCli" ${CMP.cliente?"checked":""}> Incluir Cantinex</label>`;
+  let corpo = "", ctrl = "";
+  if (CMP.modo === "dois"){
+    ctrl = `<div class="fg" style="max-width:640px"><label class="fld">Restaurante A<select id="cA">${opts(CMP.a)}</select></label><label class="fld">Restaurante B<select id="cB">${opts(CMP.b)}</select></label></div>${chooser}`;
+    corpo = cmpDois();
+  } else if (CMP.modo === "tabela"){
+    ctrl = `<div class="toolbar" style="margin:0">${filtros}</div>${chooser}`;
+    corpo = cmpTabela();
+  } else {
+    const met = [["forca","Força competitiva"],["ameaca","Índice de ameaça"],["preco","Preço (R$)"],["google","Nota no Google"],...GRUPOS.map(g=>["g:"+g,"Grupo: "+g]),...CRITERIOS.map(c=>["c:"+c.k,c.n])];
+    ctrl = `<div class="toolbar" style="margin:0"><select id="cMet" style="width:auto">${met.map(([k,t])=>`<option value="${esc(k)}" ${CMP.metrica===k?"selected":""}>${esc(t)}</option>`).join("")}</select>${filtros}
+      <div class="seg"><button data-cor="categoria" class="${CMP.cor==="categoria"?"on":""}">Cor por categoria</button><button data-cor="perfil" class="${CMP.cor==="perfil"?"on":""}">Cor por perfil</button></div></div>`;
+    corpo = cmpGrafico();
+  }
+  return `<p class="lead">Compare dois restaurantes lado a lado, veja todos numa tabela ou ordene por qualquer critério em gráfico.</p>
+    <div class="toolbar"><div class="seg" id="cModo">${[["dois","Lado a lado"],["tabela","Tabela geral"],["grafico","Gráfico por critério"]].map(([k,t])=>`<button data-m="${k}" class="${CMP.modo===k?"on":""}">${t}</button>`).join("")}</div></div>
+    <div style="display:flex;flex-direction:column;gap:12px">${ctrl}</div>
+    <div style="margin-top:16px">${corpo}</div>`;
+};
+function filtrados(){ return concorrentes().filter(c => !c.rascunho && (CMP.perfil === "todos" || c.perfil === CMP.perfil) && (CMP.cat === "todos" || c.categoria === CMP.cat)); }
+function cmpDois(){
+  const a = byId(CMP.a), b = byId(CMP.b); if (!a || !b) return "";
+  const crits = CRITERIOS.filter(c => CMP.crit.has(c.k));
+  const cel = (x, win) => `<td class="${win?"win":""}">${typeof x === "number" ? fmt(x) : '<span class="na">—</span>'}</td>`;
+  const dif = (x,y) => (typeof x === "number" && typeof y === "number") ? (x===y ? "0" : (x>y?"▲ ":"▼ ") + fmt(Math.abs(x-y))) : "—";
+  const linhas = crits.map(c => { const va = (a.criterios||{})[c.k], vb = (b.criterios||{})[c.k]; const ok = typeof va==="number" && typeof vb==="number"; return `<tr><td class="cl">${c.n}</td>${cel(va, ok&&va>vb)}${cel(vb, ok&&vb>va)}<td class="muted">${dif(va,vb)}</td></tr>`; }).join("");
+  const fa = forca(a), fb = forca(b);
+  const series = [{ nome:a.nome, cor:a.id==="cliente"?"var(--cliente)":"#0072B2", vals:d=>(a.criterios||{})[d.k] ?? null, grosso:true }, { nome:b.nome, cor:b.id==="cliente"?"var(--cliente)":"#D55E00", vals:d=>(b.criterios||{})[d.k] ?? null, dash:b.id==="cliente" }];
+  const dims = crits.filter(c => typeof (a.criterios||{})[c.k] === "number" || typeof (b.criterios||{})[c.k] === "number");
+  const txt = (r,k) => (r.anotacoes||{})[k] ? esc(r.anotacoes[k]) : '<span class="na">—</span>';
+  return `<div class="grid g2">
+    <div class="card pad"><div class="sec" style="margin:0 0 6px"><h2>Perfis sobrepostos</h2><span class="sp"></span><button class="btn sm ghost" id="dlC">Baixar SVG</button></div>${radarSVG(series, dims, { id:"radarCmp" })}${legendHTML(series)}</div>
+    <div class="twrap"><table class="cmp"><thead><tr><th class="cl">Critério</th><th>${esc(a.nome)}</th><th>${esc(b.nome)}</th><th>Diferença</th></tr></thead><tbody>
+      <tr class="hl"><td class="cl">Perfil</td><td>${esc((PERFIS[a.perfil]||{}).n||"—")}</td><td>${esc((PERFIS[b.perfil]||{}).n||"—")}</td><td></td></tr>
+      <tr class="hl"><td class="cl">Preço</td><td>${esc(precoTxt(a))||"—"}</td><td>${esc(precoTxt(b))||"—"}</td><td></td></tr>
+      <tr class="hl"><td class="cl">Força competitiva</td>${cel(fa, fa!=null&&fb!=null&&fa>fb)}${cel(fb, fa!=null&&fb!=null&&fb>fa)}<td class="muted">${dif(fa,fb)}</td></tr>
+      ${linhas}</tbody></table></div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">${[a,b].map(r => `<div class="card pad"><h3 style="font-size:16px;margin-bottom:6px">${esc(r.nome)}</h3><p class="small"><b>Fortes:</b> ${txt(r,"fortes")}</p><p class="small" style="margin-top:4px"><b>Fracos:</b> ${txt(r,"fracos")}</p><p class="small" style="margin-top:4px"><b>Diferenciais:</b> ${txt(r,"diferenciais")}</p></div>`).join("")}</div>`;
+}
+function cmpTabela(){
+  const lst = [...(CMP.cliente ? [cliente()] : []), ...filtrados().sort((a,b)=>(forca(b)??-1)-(forca(a)??-1))];
+  if (!lst.length) return `<p class="na">Nenhum restaurante com esses filtros.</p>`;
+  const crits = CRITERIOS.filter(c => CMP.crit.has(c.k));
+  const heat = v => typeof v === "number" ? `background:color-mix(in srgb,${corNota(v)} ${Math.round(8 + v*4)}%,transparent)` : "";
+  const head = `<th class="cl">Critério</th>` + lst.map(r => `<th class="${r.id==="cliente"?"cli":""}">${esc(r.nome)}${r.id==="cliente"?" ★":""}</th>`).join("");
+  const row = (nome, f, cls="") => `<tr class="${cls}"><td class="cl">${nome}</td>${lst.map(f).join("")}</tr>`;
+  let body = row("Perfil", r => `<td class="small">${esc((PERFIS[r.perfil]||{}).n||"—")}</td>`, "hl");
+  body += row("Preço", r => `<td>${esc(precoTxt(r))||"—"}</td>`, "hl");
+  body += row("Canais", r => `<td class="small">${esc((r.canais||[]).map(k=>CANAIS[k]).join(", ")||"—")}</td>`);
+  body += row("Abre fim de semana", r => `<td>${(r.dias||[]).some(d=>d==="sab"||d==="dom") ? "Sim" : "Não"}</td>`);
+  body += row("Força competitiva", r => { const f = forca(r); return `<td style="${heat(f)};font-weight:800">${fmt(f)}</td>`; }, "hl");
+  for (const g of GRUPOS){
+    const cs = crits.filter(c => c.g === g); if (!cs.length) continue;
+    body += row(`<span style="color:var(--gold-ink)">${g}</span>`, r => `<td style="font-weight:700">${fmt(notaGrupo(r,g))}</td>`, "hl");
+    for (const c of cs){
+      const vs = lst.map(r => (r.criterios||{})[c.k]); const mx = Math.max(...vs.filter(v=>typeof v==="number"), -1);
+      body += row(c.n, (r,i) => { const v = (r.criterios||{})[c.k]; return `<td style="${heat(v)}" class="${typeof v==="number"&&v===mx&&lst.length>1?"win":""}">${typeof v==="number"?fmt(v):'<span class="na">—</span>'}</td>`; });
+    }
+  }
+  return `<div class="toolbar" style="margin-top:0"><span class="small muted">Cores do verde ao vermelho indicam a nota; em verde forte, o melhor de cada linha.</span><span class="grow"></span><button class="btn sm ghost" id="dlCSV">Exportar tabela (CSV)</button></div>
+    <div class="twrap"><table class="cmp"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function metricaDe(r, m){
+  if (m === "forca") return forca(r);
+  if (m === "ameaca") { const a = ameaca(r); return a ? a.idx : null; }
+  if (m === "preco") return precoNum(r);
+  if (m === "google") { const v = parseFloat(String((r.google||{}).nota||"").replace(",",".")); return isNaN(v) ? null : v; }
+  if (m.startsWith("g:")) return notaGrupo(r, m.slice(2));
+  if (m.startsWith("c:")) { const v = (r.criterios||{})[m.slice(2)]; return typeof v === "number" ? v : null; }
+  return null;
+}
+function cmpGrafico(){
+  let lst = filtrados(); if (CMP.cliente && CMP.metrica !== "ameaca") lst = [cliente(), ...lst];
+  const m = CMP.metrica, ehPreco = m === "preco";
+  const itens = lst.map(r => ({ nome:r.nome, v:metricaDe(r,m), cor:corDe(r), destaque:r.id==="cliente" })).filter(x => x.v != null).sort((a,b) => ehPreco ? a.v - b.v : b.v - a.v);
+  const max = ehPreco ? Math.max(10, Math.ceil(Math.max(...itens.map(i=>i.v), 0)/10)*10) : 5;
+  const semValor = lst.filter(r => metricaDe(r,m) == null).map(r => r.nome);
+  const leg = CMP.cor === "perfil" ? Object.entries(PERFIS).map(([k,p])=>`<span><span class="sw" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.cor}"></span>${p.n}</span>`).join("") : ["direto","indireto","estrategico"].map(k=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${CATEGORIAS[k].cor}"></span>${CATEGORIAS[k].longo}</span>`).join("");
+  return `<div class="card pad">${ehPreco ? `<div class="callout" style="margin-bottom:12px">Preços de tipos diferentes (prato feito, quilo, marmitex) não são diretamente comparáveis. Filtre por perfil para comparar preços equivalentes.</div>` : ""}
+    <div class="toolbar" style="margin-top:0"><span class="grow"></span><button class="btn sm ghost" id="dlG">Baixar SVG</button></div>
+    ${barrasSVG(itens, { id:"barCmp", max, fmtV: v => ehPreco ? "R$ " + fmt(v,2) : fmt(v) })}
+    <div class="legend">${leg}<span><span style="display:inline-block;width:10px;height:10px;background:var(--cliente);transform:rotate(45deg)"></span>Cantinex</span></div>
+    ${semValor.length ? `<p class="small muted" style="margin-top:8px">Sem valor nesta métrica: ${esc(semValor.join(", "))}.</p>` : ""}</div>`;
+}
+INIT.comparativo = () => {
+  $$("#cModo button").forEach(b => b.onclick = () => { CMP.modo = b.dataset.m; render(); });
+  const on = (s, f) => { const e = $(s); if (e) e.onchange = ev => { f(ev.target); render(); }; };
+  on("#cA", e => CMP.a = e.value); on("#cB", e => CMP.b = e.value);
+  on("#cPerfil", e => CMP.perfil = e.value); on("#cCat", e => CMP.cat = e.value); on("#cCli", e => CMP.cliente = e.checked);
+  on("#cMet", e => CMP.metrica = e.value);
+  $$("[data-cor]").forEach(b => b.onclick = () => { CMP.cor = b.dataset.cor; render(); });
+  $$("[data-c]").forEach(c => c.onchange = () => { c.checked ? CMP.crit.add(c.dataset.c) : CMP.crit.delete(c.dataset.c); render(); $("details.chooser").open = true; });
+  $$("[data-allc]").forEach(b => b.onclick = () => { CMP.crit = b.dataset.allc === "1" ? new Set(KEYS_TODOS) : new Set(); render(); $("details.chooser").open = true; });
+  const d1 = $("#dlC"); if (d1) d1.onclick = () => svgParaArquivo("#radarCmp", "comparativo-perfis.svg");
+  const d2 = $("#dlG"); if (d2) d2.onclick = () => svgParaArquivo("#barCmp", "comparativo-grafico.svg");
+  const d3 = $("#dlCSV"); if (d3) d3.onclick = () => exportarCSV();
+};
+
+/* ---------- Perfis (sobreposição) ---------- */
+const PRF = { modo:"sobrepor", eixos:"criterios", camadas:null };
+TITULOS.perfis = ["Comparativo por perfil", "Perfis sobrepostos"];
+function mediaPerfil(k){
+  const lst = ativos().filter(c => c.perfil === k);
+  const out = {}; for (const c of CRITERIOS){ const v = lst.map(r => (r.criterios||{})[c.k]).filter(x => typeof x === "number"); out[c.k] = v.length ? media(v) : null; }
+  return { lst, crit:out };
+}
+function camadasDisponiveis(){
+  const L = [];
+  L.push({ id:"cli", nome:"Cantinex", cor:"var(--cliente)", tipo:"cliente", crit:cliente().criterios||{}, dash:true });
+  Object.entries(PERFIS).forEach(([k,p]) => { const m = mediaPerfil(k); if (m.lst.length) L.push({ id:"p:"+k, nome:"Média · " + p.n, cor:p.cor, tipo:"perfil", n:m.lst.length, crit:m.crit, grosso:true }); });
+  ativos().forEach((r,i) => L.push({ id:"r:"+r.id, nome:r.nome, cor:SERIES[(i+3) % SERIES.length], tipo:"rest", perfil:r.perfil, crit:r.criterios||{} }));
+  return L;
+}
+VIEWS.perfis = () => {
+  const L = camadasDisponiveis();
+  if (L.length <= 1) return `<div class="card empty"><h3>Avalie restaurantes para comparar perfis</h3><p>As médias por perfil aparecem assim que houver concorrentes com notas.</p><a class="btn gold" href="#novo">＋ Cadastrar restaurante</a></div>`;
+  if (!PRF.camadas) PRF.camadas = new Set(L.filter(l => l.tipo !== "rest").map(l => l.id));
+  for (const id of [...PRF.camadas]) if (!L.find(l => l.id === id)) PRF.camadas.delete(id);
+  const sel = L.filter(l => PRF.camadas.has(l.id));
+  const dims = PRF.eixos === "grupos" ? GRUPOS.map(g => ({ k:"g:"+g, n:g, g })) : CRITERIOS;
+  const valor = (l, d) => d.g && d.k.startsWith("g:") ? media(CRITERIOS.filter(c=>c.g===d.g).map(c=>l.crit[c.k]).filter(v=>typeof v==="number")) : (typeof l.crit[d.k] === "number" ? l.crit[d.k] : null);
+  const series = sel.map(l => ({ nome:l.nome, cor:l.cor, dash:l.dash, grosso:l.grosso, vals:d => valor(l,d) }));
+  const dimsUsadas = dims.filter(d => sel.some(l => valor(l,d) != null));
+  const grafico = !sel.length ? `<p class="na" style="padding:30px 0;text-align:center">Marque ao menos uma camada ao lado.</p>` :
+    PRF.modo === "sobrepor" ? `${radarSVG(series, dimsUsadas, { id:"radarPerfis", size:520 })}${legendHTML(series)}` :
+    `<div class="multi">${sel.map((l,i) => `<div class="card pad" style="padding:12px"><h4 style="color:${l.cor === "var(--cliente)" ? "var(--cliente)" : "var(--heading)"}">${esc(l.nome)}</h4>${radarSVG([Object.assign({}, series[i], { dash:false })], dimsUsadas, { id:"rm"+i, size:280, compact:true })}</div>`).join("")}</div>`;
+  const grupoLayer = (titulo, tipo) => { const ls = L.filter(l => l.tipo === tipo); return ls.length ? `<h4>${titulo}</h4>` + ls.map(l => `<label class="layer"><input type="checkbox" data-l="${esc(l.id)}" ${PRF.camadas.has(l.id)?"checked":""}><span class="sw" style="background:${l.cor}"></span><span class="n" title="${esc(l.nome)}">${esc(l.nome.replace("Média · ",""))}</span>${l.n?`<span class="c">${l.n}</span>`:""}</label>`).join("") : ""; };
+
+  const perfisCom = Object.entries(PERFIS).filter(([k]) => ativos().some(c => c.perfil === k));
+  const cli = cliente();
+  const resumo = perfisCom.map(([k,p]) => {
+    const lst = ativos().filter(c => c.perfil === k);
+    const tipos = {}; lst.forEach(c => { if (c.preco && c.preco.valor) tipos[c.preco.tipo] = (tipos[c.preco.tipo]||[]).concat(precoNum(c)); });
+    const tp = Object.entries(tipos).sort((a,b)=>b[1].length-a[1].length)[0];
+    const pct = f => Math.round(lst.filter(f).length / lst.length * 100) + "%";
+    const gn = lst.map(c => parseFloat(String((c.google||{}).nota||"").replace(",","."))).filter(v=>!isNaN(v));
+    return `<tr><td class="cl">${perfilPill(k)}</td><td>${lst.length}</td><td style="font-weight:800">${fmt(media(lst.map(forca).filter(v=>v!=null)))}</td><td>${fmt(media(lst.map(c=>(ameaca(c)||{}).idx).filter(v=>v!=null)))}</td>
+      <td>${tp ? "R$ " + fmt(media(tp[1].filter(v=>v!=null)),2) + " <span class='muted small'>" + PRECO_TIPOS[tp[0]] + "</span>" : "—"}</td>
+      <td>${pct(c => (c.canais||[]).some(x => ["ifood","99food","proprio","whatsapp"].includes(x)))}</td><td>${pct(c => (c.dias||[]).some(d=>d==="sab"||d==="dom"))}</td><td>${gn.length?fmt(media(gn)):"—"}</td>
+      ${GRUPOS.map(g => { const m = media(lst.map(c=>notaGrupo(c,g)).filter(v=>v!=null)), mc = notaGrupo(cli,g); const d = m!=null&&mc!=null ? mc - m : null; return `<td>${fmt(m)}${d!=null?` <span class="small" style="color:${d>=0?"var(--ok)":"var(--danger)"}">${d>=0?"+":"−"}${fmt(Math.abs(d))}</span>`:""}</td>`; }).join("")}</tr>`;
+  }).join("");
+  return `<p class="lead">Sobreponha o perfil da Cantinex às médias de cada tipo de concorrente (prato feito, self-service, marmitex…) ou a restaurantes específicos, para ver onde ela ganha e onde perde.</p>
+    <div class="toolbar">
+      <div class="seg" id="pModo"><button data-m="sobrepor" class="${PRF.modo==="sobrepor"?"on":""}">Sobrepor</button><button data-m="lado" class="${PRF.modo==="lado"?"on":""}">Lado a lado</button></div>
+      <div class="seg" id="pEixos"><button data-e="criterios" class="${PRF.eixos==="criterios"?"on":""}">Eixos: critérios</button><button data-e="grupos" class="${PRF.eixos==="grupos"?"on":""}">Eixos: grupos</button></div>
+      <span class="grow"></span>${PRF.modo==="sobrepor"?`<button class="btn sm ghost" id="dlP">Baixar SVG</button>`:""}
+    </div>
+    <div class="mapgrid">
+      <div class="card pad">${grafico}</div>
+      <div class="card pad"><div class="layers scroll">${grupoLayer("Referência","cliente")}${grupoLayer("Médias por perfil","perfil")}${grupoLayer("Restaurantes","rest")}</div>
+        <div class="toolbar" style="margin-bottom:0"><button class="btn sm ghost" id="lPerfis">Só perfis</button><button class="btn sm ghost" id="lLimpar">Limpar</button></div></div>
+    </div>
+    <div class="sec"><h2>Resumo por perfil</h2><span class="hint">ao lado de cada grupo, a diferença da Cantinex para a média do perfil</span></div>
+    ${resumo ? `<div class="twrap"><table class="cmp"><thead><tr><th class="cl">Perfil</th><th>Qtd.</th><th>Força</th><th>Ameaça</th><th>Preço médio</th><th>Com delivery</th><th>Abre fim de semana</th><th>Google</th>${GRUPOS.map(g=>`<th>${g}</th>`).join("")}</tr></thead><tbody>${resumo}</tbody></table></div>` : `<p class="na">Sem perfis avaliados.</p>`}`;
+};
+INIT.perfis = () => {
+  $$("#pModo button").forEach(b => b.onclick = () => { PRF.modo = b.dataset.m; render(); });
+  $$("#pEixos button").forEach(b => b.onclick = () => { PRF.eixos = b.dataset.e; render(); });
+  $$("[data-l]").forEach(c => c.onchange = () => { c.checked ? PRF.camadas.add(c.dataset.l) : PRF.camadas.delete(c.dataset.l); render(); });
+  const lp = $("#lPerfis"); if (lp) lp.onclick = () => { PRF.camadas = new Set(camadasDisponiveis().filter(l => l.tipo !== "rest").map(l => l.id)); render(); };
+  const ll = $("#lLimpar"); if (ll) ll.onclick = () => { PRF.camadas = new Set(); render(); };
+  const d = $("#dlP"); if (d) d.onclick = () => svgParaArquivo("#radarPerfis", "perfis-sobrepostos.svg");
+};
+
+/* ---------- Mapa de percepção ---------- */
+const MAP = { x:"preco", y:"g:Proposta e valor", cor:"perfil", tipoPreco:"pf", areas:true, centros:false, ocultos:new Set() };
+TITULOS.mapa = ["Mapa de percepção", "Posicionamento competitivo"];
+const EIXOS = () => [["forca","Força competitiva"],["preco","Preço (R$)"],["google","Nota no Google"],["distancia","Distância da Cantinex (m)"],...GRUPOS.map(g=>["g:"+g,g]),...CRITERIOS.map(c=>["c:"+c.k,c.n])];
+function eixoValor(r, e){ if (e === "distancia") { if (r.id === "cliente") return 0; const v = parseFloat(r.distancia); return isNaN(v) ? null : v; } if (e === "preco" && r.preco && r.preco.tipo !== MAP.tipoPreco) return null; return metricaDe(r, e); }
+function eixoNome(e){ const x = EIXOS().find(a => a[0] === e); return x ? x[1] : e; }
+function eixoEscala(e, vs){ if (e === "preco" || e === "distancia"){ const mx = Math.max(...vs, 1); const mn = e === "preco" ? Math.min(...vs) : 0; const pad = (mx - mn) * 0.12 || mx*0.1 || 5; return [Math.max(0, Math.floor((mn - pad))), Math.ceil(mx + pad)]; } if (e === "google") return [Math.max(0, Math.floor(Math.min(...vs, 4)*2)/2 - .5), 5]; return [0,5]; }
+VIEWS.mapa = () => {
+  const lista = [cliente(), ...ativos()];
+  const pontos = lista.map(r => ({ r, x:eixoValor(r, MAP.x), y:eixoValor(r, MAP.y) })).filter(p => p.x != null && p.y != null && !MAP.ocultos.has(p.r.id === "cliente" ? "cliente" : p.r.perfil));
+  const fora = lista.filter(r => eixoValor(r, MAP.x) == null || eixoValor(r, MAP.y) == null).map(r => r.nome);
+  const sel = (id, v) => `<select id="${id}" style="width:auto">${EIXOS().map(([k,t])=>`<option value="${esc(k)}" ${v===k?"selected":""}>${esc(t)}</option>`).join("")}</select>`;
+  const usaPreco = MAP.x === "preco" || MAP.y === "preco";
+  const perfisPresentes = Object.entries(PERFIS).filter(([k]) => ativos().some(c => c.perfil === k));
+  return `<p class="lead">Escolha dois atributos para os eixos e veja onde cada concorrente se posiciona em relação à Cantinex. Ligue e desligue as camadas por perfil para sobrepor ou isolar grupos.</p>
+    <div class="toolbar">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:8px">Eixo X ${sel("mX", MAP.x)}</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:8px">Eixo Y ${sel("mY", MAP.y)}</label>
+      <button class="btn sm ghost" id="mTroca" title="Inverter eixos">⇄ Inverter</button>
+      ${usaPreco ? `<label class="fld" style="flex-direction:row;align-items:center;gap:8px">Preço <select id="mTipo" style="width:auto">${Object.entries(PRECO_TIPOS).map(([k,t])=>`<option value="${k}" ${MAP.tipoPreco===k?"selected":""}>${t}</option>`).join("")}</select></label>` : ""}
+      <span class="grow"></span><button class="btn sm ghost" id="dlM">Baixar SVG</button>
+    </div>
+    <div class="mapgrid">
+      <div class="card pad">${pontos.length ? mapaSVG(pontos) : `<p class="na" style="padding:40px 0;text-align:center">Nenhum restaurante tem valores para esses dois eixos${usaPreco ? " com esse tipo de preço" : ""}.</p>`}
+        ${fora.length ? `<p class="small muted" style="margin-top:8px">Fora do mapa (sem dado em algum eixo): ${esc(fora.join(", "))}.</p>` : ""}</div>
+      <div class="card pad"><div class="layers">
+        <h4>Cor dos pontos</h4>
+        <div class="seg" style="margin-bottom:6px"><button data-mc="perfil" class="${MAP.cor==="perfil"?"on":""}">Perfil</button><button data-mc="categoria" class="${MAP.cor==="categoria"?"on":""}">Categoria</button></div>
+        <h4>Camadas por perfil</h4>
+        <label class="layer"><input type="checkbox" data-mo="cliente" ${!MAP.ocultos.has("cliente")?"checked":""}><span class="sw" style="background:var(--cliente);transform:rotate(45deg) scale(.8)"></span><span class="n">Cantinex</span></label>
+        ${perfisPresentes.map(([k,p]) => `<label class="layer"><input type="checkbox" data-mo="${k}" ${!MAP.ocultos.has(k)?"checked":""}><span class="sw" style="background:${p.cor}"></span><span class="n">${p.n}</span><span class="c">${ativos().filter(c=>c.perfil===k).length}</span></label>`).join("")}
+        <h4>Sobreposições</h4>
+        <label class="layer"><input type="checkbox" id="mAreas" ${MAP.areas?"checked":""}><span class="n">Área de cada perfil</span></label>
+        <label class="layer"><input type="checkbox" id="mCentros" ${MAP.centros?"checked":""}><span class="n">Centro (média) de cada perfil</span></label>
+        <h4>Formas por categoria</h4>
+        ${["direto","indireto","estrategico"].map(k => `<div class="layer" style="cursor:default"><svg width="16" height="16" viewBox="0 0 16 16">${forma(CATEGORIAS[k].forma, 8, 8, 6, "var(--muted)")}</svg><span class="n">${CATEGORIAS[k].longo}</span></div>`).join("")}
+      </div></div>
+    </div>
+    <div class="callout" style="margin-top:16px"><b>Como ler:</b> as linhas tracejadas marcam o meio de cada eixo e dividem o mapa em quadrantes. Pontos perto da Cantinex disputam o mesmo espaço na cabeça do cliente; áreas vazias indicam posicionamentos ainda não ocupados no Buritis.</div>`;
+};
+function mapaSVG(pontos){
+  const W = 820, H = 560, x0 = 70, y0 = H - 60, x1 = W - 24, y1 = 30;
+  const [ax0, ax1] = eixoEscala(MAP.x, pontos.map(p=>p.x)), [ay0, ay1] = eixoEscala(MAP.y, pontos.map(p=>p.y));
+  const sx = v => x0 + (v - ax0) / (ax1 - ax0 || 1) * (x1 - x0), sy = v => y0 - (v - ay0) / (ay1 - ay0 || 1) * (y0 - y1);
+  const ticks = (a, b) => { const span = b - a; const st = span <= 5 ? (span <= 2 ? .5 : 1) : Math.pow(10, Math.floor(Math.log10(span/5))) * ([1,2,5].find(m => span / (Math.pow(10, Math.floor(Math.log10(span/5)))*m) <= 8) || 10); const out = []; for (let v = Math.ceil(a/st)*st; v <= b + 1e-9; v += st) out.push(r1(v*100)/100); return out; };
+  let g = "";
+  for (const v of ticks(ax0, ax1)) g += `<line class="gl" x1="${sx(v)}" y1="${y1}" x2="${sx(v)}" y2="${y0}"/><text x="${sx(v)}" y="${y0+18}" font-size="11" text-anchor="middle">${fmt(v, v % 1 ? 1 : 0)}</text>`;
+  for (const v of ticks(ay0, ay1)) g += `<line class="gl" x1="${x0}" y1="${sy(v)}" x2="${x1}" y2="${sy(v)}"/><text x="${x0-10}" y="${sy(v)+4}" font-size="11" text-anchor="end">${fmt(v, v % 1 ? 1 : 0)}</text>`;
+  const mx = sx((ax0+ax1)/2), my = sy((ay0+ay1)/2);
+  g += `<line class="ax" x1="${mx}" y1="${y1}" x2="${mx}" y2="${y0}" stroke-dasharray="5 5"/><line class="ax" x1="${x0}" y1="${my}" x2="${x1}" y2="${my}" stroke-dasharray="5 5"/>`;
+  g += `<line class="ax" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y0}" stroke-width="1.5"/><line class="ax" x1="${x0}" y1="${y0}" x2="${x0}" y2="${y1}" stroke-width="1.5"/>`;
+  g += `<text class="lbl" x="${(x0+x1)/2}" y="${H-14}" font-size="13" text-anchor="middle">${esc(eixoNome(MAP.x))}${MAP.x==="preco"?" · "+PRECO_TIPOS[MAP.tipoPreco]:""}</text>`;
+  g += `<text class="lbl" x="18" y="${(y0+y1)/2}" font-size="13" text-anchor="middle" transform="rotate(-90 18 ${(y0+y1)/2})">${esc(eixoNome(MAP.y))}${MAP.y==="preco"?" · "+PRECO_TIPOS[MAP.tipoPreco]:""}</text>`;
+  const P = pontos.map(p => ({ id:p.r.id, nome:p.r.nome, px:sx(p.x), py:sy(p.y), x:p.x, y:p.y, cat:p.r.id==="cliente"?"cliente":p.r.categoria, perfil:p.r.perfil, cli:p.r.id==="cliente" }));
+  let areas = "";
+  const grupos = {};
+  P.filter(p => !p.cli).forEach(p => (grupos[p.perfil] = grupos[p.perfil] || []).push(p));
+  for (const [k, ps] of Object.entries(grupos)){
+    const cor = (PERFIS[k]||PERFIS.outro).cor;
+    if (MAP.areas && ps.length >= 2){
+      if (ps.length === 2) areas += `<line x1="${ps[0].px}" y1="${ps[0].py}" x2="${ps[1].px}" y2="${ps[1].py}" stroke="${cor}" stroke-opacity=".22" stroke-width="22" stroke-linecap="round"/>`;
+      else { const h = hull(ps.map(p=>[p.px,p.py])); areas += `<polygon points="${h.map(p=>p.join(",")).join(" ")}" fill="${cor}" fill-opacity=".14" stroke="${cor}" stroke-opacity=".22" stroke-width="22" stroke-linejoin="round"/>`; }
+    }
+    if (MAP.centros){ const cx = media(ps.map(p=>p.px)), cy = media(ps.map(p=>p.py)); areas += `<g><line x1="${cx-9}" y1="${cy}" x2="${cx+9}" y2="${cy}" stroke="${cor}" stroke-width="3"/><line x1="${cx}" y1="${cy-9}" x2="${cx}" y2="${cy+9}" stroke="${cor}" stroke-width="3"/><title>Média · ${esc((PERFIS[k]||{}).n||k)}</title></g>`; }
+  }
+  const rot = rotulos(P, { x0, x1, y0, y1 });
+  let leads = "", marks = "", labs = "";
+  for (const it of rot){ const cor = it.p.cli ? "var(--cliente)" : (MAP.cor === "perfil" ? (PERFIS[it.p.perfil]||PERFIS.outro).cor : CATEGORIAS[it.p.cat].cor);
+    if (it.lead) leads += `<line x1="${it.p.px}" y1="${it.p.py}" x2="${it.rc.cx}" y2="${it.rc.cy}" stroke="${cor}" stroke-opacity=".6" stroke-dasharray="2 2"/>`;
+    labs += `<g><rect class="lab-bg" x="${it.rc.cx - it.w/2}" y="${it.rc.cy-10}" width="${it.w}" height="20" rx="10" stroke="${cor}" stroke-width="1.2"/><text class="lbl" x="${it.rc.cx}" y="${it.rc.cy+4}" font-size="11.5" text-anchor="middle">${esc(it.p.nome)}</text></g>`; }
+  for (const p of P){ const cor = p.cli ? "var(--cliente)" : (MAP.cor === "perfil" ? (PERFIS[p.perfil]||PERFIS.outro).cor : CATEGORIAS[p.cat].cor);
+    const f = p.cli ? "diamond" : CATEGORIAS[p.cat].forma;
+    marks += `<a href="#ficha-${esc(p.id)}"><g>${forma(f, p.px, p.py, p.cli ? 12 : 10, cor, 'stroke="var(--surface)" stroke-width="2.5"')}<title>${esc(p.nome)}: ${fmt(p.x, MAP.x==="preco"?2:1)} × ${fmt(p.y, MAP.y==="preco"?2:1)}</title></g></a>`; }
+  return `<svg class="chart" id="mapaSvg" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Mapa de percepção">${g}${areas}${leads}${marks}${labs}</svg>`;
+}
+INIT.mapa = () => {
+  const on = (s, f) => { const e = $(s); if (e) e.onchange = ev => { f(ev.target); render(); }; };
+  on("#mX", e => MAP.x = e.value); on("#mY", e => MAP.y = e.value); on("#mTipo", e => MAP.tipoPreco = e.value);
+  on("#mAreas", e => MAP.areas = e.checked); on("#mCentros", e => MAP.centros = e.checked);
+  $("#mTroca").onclick = () => { [MAP.x, MAP.y] = [MAP.y, MAP.x]; render(); };
+  $$("[data-mc]").forEach(b => b.onclick = () => { MAP.cor = b.dataset.mc; render(); });
+  $$("[data-mo]").forEach(c => c.onchange = () => { c.checked ? MAP.ocultos.delete(c.dataset.mo) : MAP.ocultos.add(c.dataset.mo); render(); });
+  $("#dlM").onclick = () => svgParaArquivo("#mapaSvg", "mapa-de-percepcao.svg");
+};
+
+/* ---------- Metodologia ---------- */
+TITULOS.metodologia = ["Metodologia", "Como as notas funcionam"];
+VIEWS.metodologia = () => `
+  <p class="lead">Critérios, cálculos e cuidados de coleta. A regra do projeto vale aqui: nada inventado, todo número com fonte e data, e estimativas marcadas como “estimativa IBMEX”.</p>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card pad"><h3>Força competitiva</h3><p class="muted" style="margin-top:6px">Média simples das notas preenchidas (0 a 5), sem contar a similaridade. Mede o quão bem o restaurante entrega, do ponto de vista do cliente.</p></div>
+    <div class="card pad"><h3>Nível de ameaça</h3><p class="muted" style="margin-top:6px">Índice = 60% da força + 40% da similaridade com a Cantinex (sem similaridade, usa só a força). Faixas: acima de 4 muito alta; acima de 3 alta; acima de 2 média; acima de 1 baixa; até 1 muito baixa.</p></div>
+    <div class="card pad"><h3>Categorias</h3><p class="muted" style="margin-top:6px"><b>Direto:</b> disputa o mesmo almoço caseiro no Buritis. <b>Indireto:</b> resolve a mesma necessidade de outro jeito (fast-food, padaria, marmita de app). <b>Estratégico:</b> referência a observar (boa prática em delivery, fidelização, fim de semana).</p></div>
+    <div class="card pad"><h3>Perfis</h3><p class="muted" style="margin-top:6px">Agrupam restaurantes pelo modelo de serviço (prato feito, self-service por quilo, marmitex, à la carte, padaria). A tela de perfis calcula a média de cada grupo e permite sobrepor esses perfis ao da Cantinex.</p></div>
+  </div>
+  <div class="sec"><h2>Guia dos critérios</h2><span class="hint">5 é sempre o melhor para o cliente</span></div>
+  <div class="twrap"><table class="cmp"><thead><tr><th class="cl">Critério</th><th style="text-align:left">Grupo</th><th style="text-align:left">O que observar</th></tr></thead><tbody>
+    ${CRITERIOS.map(c => `<tr><td class="cl">${c.n}</td><td style="text-align:left">${c.g}</td><td style="text-align:left;white-space:normal">${esc(c.h)}</td></tr>`).join("")}</tbody></table></div>
+  <div class="sec"><h2>Escala sugerida</h2></div>
+  <div class="card pad"><p class="muted"><b>0</b> inexistente · <b>1</b> muito fraco · <b>2</b> fraco · <b>3</b> na média do bairro · <b>4</b> bom · <b>5</b> referência no Buritis. Use meios pontos quando ficar entre dois níveis, e registre nos comentários o que justificou notas extremas.</p></div>`;
+
+/* ---------- Dados ---------- */
+TITULOS.dados = ["Dados e backup", "Exportar, importar e sincronizar"];
+VIEWS.dados = () => {
+  const loc = lerLocal(); const nLoc = loc ? Object.keys(loc.rest).length : 0;
+  return `<p class="lead">${S.mode === "db" ? "Os dados estão no banco compartilhado: tudo o que alguém da equipe salva aparece para os demais em tempo real." : "Os dados estão salvos só neste navegador. Exporte um backup com frequência para não perder nada."}</p>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card pad"><h3>Exportar</h3><p class="muted" style="margin:6px 0 12px">Backup completo em JSON (para importar depois) ou a tabela de notas em CSV (abre no Excel).</p>
+      <div class="toolbar" style="margin:0"><button class="btn primary" id="xJson">Exportar backup (JSON)</button><button class="btn ghost" id="xCsv">Exportar tabela (CSV)</button></div></div>
+    <div class="card pad"><h3>Importar backup</h3><p class="muted" style="margin:6px 0 12px">Adiciona ou atualiza os restaurantes e comentários do arquivo. Registros com o mesmo identificador são substituídos.</p>
+      <button class="btn ghost" id="iJson">Escolher arquivo JSON</button><input type="file" id="iFile" accept="application/json,.json" hidden></div>
+    ${S.mode === "db" && nLoc ? `<div class="card pad"><h3>Dados locais encontrados</h3><p class="muted" style="margin:6px 0 12px">Este navegador tem ${nLoc} registro${nLoc>1?"s":""} salvos antes da conexão com o banco compartilhado.</p><button class="btn gold" id="mig">Enviar para o banco compartilhado</button></div>` : ""}
+    ${S.mode === "local" ? `<div class="card pad"><h3>Seu nome</h3><p class="muted" style="margin:6px 0 12px">No modo local, os comentários são assinados com este nome.</p><div class="toolbar" style="margin:0"><input type="text" id="nome" value="${esc(localStorage.getItem("cantinex_nome")||"")}" placeholder="Seu nome" style="max-width:260px"><button class="btn ghost" id="nomeOk">Salvar nome</button></div></div>` : ""}
+  </div>
+  <div class="sec"><h2>Resumo</h2></div>
+  <div class="card pad"><p>${concorrentes().length} restaurante(s), ${Object.keys(S.coms).length} comentário(s), ficha da Cantinex ${S.rest.cliente ? "personalizada" : "com os dados do kick-off"}.</p></div>`;
+};
+function snapshot(){ return { app:"cantinex-benchmark", versao:1, exportadoEm:new Date().toISOString(), restaurantes:Object.values(S.rest), comentarios:Object.values(S.coms) }; }
+function exportarCSV(){
+  const cab = ["Nome","Categoria","Perfil","Formato","Bairro","Distância (m)","Preço","Tipo de preço","Fonte do preço","Estimativa","Canais","Dias","Google","Avaliações Google","Força","Índice de ameaça",...CRITERIOS.map(c=>c.n)];
+  const linhas = [cliente(), ...concorrentes()].map(r => [r.nome, (CATEGORIAS[r.categoria]||{}).longo, (PERFIS[r.perfil]||{}).n, r.formato, r.bairro, r.distancia, (r.preco||{}).valor, PRECO_TIPOS[(r.preco||{}).tipo], (r.preco||{}).fonte, (r.preco||{}).estimado?"sim":"", (r.canais||[]).map(k=>CANAIS[k]).join(", "), (r.dias||[]).join(", "), (r.google||{}).nota, (r.google||{}).avaliacoes, fmt(forca(r)), ameaca(r)?fmt(ameaca(r).idx):"", ...CRITERIOS.map(c => typeof (r.criterios||{})[c.k] === "number" ? fmt(r.criterios[c.k]) : "")]);
+  const q = v => { const s = String(v == null ? "" : v); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+  const csv = "\ufeff" + [cab, ...linhas].map(l => l.map(q).join(";")).join("\r\n");
+  baixar("cantinex-benchmark.csv", csv, "text/csv");
+}
+async function importar(obj){
+  if (!obj || !Array.isArray(obj.restaurantes)) throw new Error("o arquivo não tem restaurantes");
+  let n = 0;
+  for (const r of obj.restaurantes){ if (!r || !r.id || !r.nome || !/^[a-z0-9-]+$/.test(r.id)) continue; if (S.mode === "db") await S.db.collection("restaurantes").doc(r.id).set(clone(r)); S.rest[r.id] = r; n++; }
+  for (const c of (obj.comentarios||[])){ if (!c || !c.id || !c.restId || !/^[A-Za-z0-9_-]+$/.test(c.id)) continue; if (S.mode === "db") await S.db.collection("comentarios").doc(c.id).set(clone(c)); S.coms[c.id] = c; }
+  gravarLocal(); return n;
+}
+INIT.dados = () => {
+  $("#xJson").onclick = () => baixar("cantinex-benchmark-backup.json", JSON.stringify(snapshot(), null, 2), "application/json");
+  $("#xCsv").onclick = exportarCSV;
+  $("#iJson").onclick = () => $("#iFile").click();
+  $("#iFile").onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = async () => {
+    try { const o = JSON.parse(rd.result); if (!await modal({ titulo:"Importar backup", corpo:`Importar ${o.restaurantes ? o.restaurantes.length : 0} restaurante(s)? Registros com o mesmo identificador serão substituídos${S.mode==="db"?" para toda a equipe":""}.`, ok:"Importar" })) return;
+      const n = await importar(o); toast(n + " restaurante(s) importado(s)."); render(); }
+    catch(err){ toast("Arquivo inválido: " + err.message, true); } }; rd.readAsText(f); };
+  const mg = $("#mig"); if (mg) mg.onclick = async () => { const loc = lerLocal(); if (!loc) return; try { const n = await importar({ restaurantes:Object.values(loc.rest), comentarios:Object.values(loc.coms) }); localStorage.removeItem(LKEY); toast(n + " registro(s) enviados."); render(); } catch(e){ toast("Não foi possível enviar: " + (e.message||e.code), true); } };
+  const no = $("#nomeOk"); if (no) no.onclick = () => { localStorage.setItem("cantinex_nome", $("#nome").value.trim()); toast("Nome salvo."); };
+};
+
+/* ---------- Inicialização ---------- */
+(function iniciar(){
+  const loc = lerLocal(); if (loc){ S.rest = loc.rest || {}; S.coms = loc.coms || {}; }
+  render();
+  const local = () => { if (S.ready) return; S.ready = true; S.mode = "local"; render(); };
+  if (!window.claude || !window.claude.use){ local(); return; }
+  const timer = setTimeout(local, 10000);
+  (async () => {
+    let db = null;
+    try { db = await window.claude.use("db"); } catch(e){}
+    try { S.user = await window.claude.use("user"); } catch(e){}
+    if (!db){ clearTimeout(timer); local(); return; }
+    try { S.uid = S.user ? await S.user.id() : null; S.isOwner = S.user ? await S.user.isOwner() : false; } catch(e){}
+    S.db = db;
+    let gotR = false, gotC = false;
+    const pronto = () => { if (gotR && gotC && !S.ready){ clearTimeout(timer); S.ready = true; S.mode = "db"; render(); } };
+    db.collection("restaurantes").onSnapshot(snap => {
+      const m = {}; snap.docs.forEach(d => { const o = d.data(); if (o) m[d.id] = Object.assign({}, o, { id:d.id }); });
+      S.rest = m; S.mode = "db"; gotR = true; if (S.ready) agendarRender(); else pronto();
+    }, err => { if (!S.ready){ clearTimeout(timer); S.db = null; local(); } });
+    db.collection("comentarios").onSnapshot(snap => {
+      const m = {}; snap.docs.forEach(d => { const o = d.data(); if (o) m[d.id] = Object.assign({}, o, { id:d.id }); });
+      S.coms = m; gotC = true; if (S.ready) agendarRender(); else pronto();
+    }, err => {});
+  })();
+})();
+</script>
+</body>
+</html>
